@@ -19,8 +19,10 @@
 	<name>file-service</name>
 	<description>File Service</description>
 
-	<url/>
+	<!-- Github -->
+	<url>https://github.com/bemooooooooo/FileService.git</url>
 
+	<!-- License -->
 	<licenses>
 		<license/>
 	</licenses>
@@ -38,15 +40,18 @@
 		</developer>
 	</developers>
 
+	<!-- Git connection -->
 	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
+		<connection>https://github.com/bemooooooooo/FileService.git</connection>
+		<url>https://github.com/bemooooooooo/FileService/tree/java-snapshot</url>
 	</scm>
+
+	<!-- Config properties -->
 	<properties>
 		<java.version>23</java.version>
+		<jjwt.version>0.11.5</jjwt.version>
 	</properties>
+
 	<dependencies>
 
 		<!-- Rest API -->
@@ -59,6 +64,12 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+
+		<!-- Security / JWT -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
 		<!-- Postgres -->
@@ -80,6 +91,34 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+
+		<!-- Security Tests -->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- JWT !-->
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>${jjwt.version}</version>
+		</dependency>
+
+		<!-- JWT !-->
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>${jjwt.version}</version>
+		</dependency>
+
+		<!-- JWT !-->
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>${jjwt.version}</version>
 		</dependency>
 
 	</dependencies>
