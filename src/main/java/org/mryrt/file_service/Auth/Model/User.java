@@ -5,21 +5,53 @@ import jakarta.persistence.*;
 
 // Lombok
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
+// Java util
+import java.time.Instant;
+import java.util.HashSet;
+
+/**
+ * Класс модели для представления информации о пользователе.
+ * Содержит поля для хранения имени пользователя, пароля и ролей.
+ */
 @Entity
+@Table(name = "file_service_user")
 @Data
-@RequiredArgsConstructor
-public class UserInfo {
+@NoArgsConstructor
+@ToString
+public class User {
+    /**
+     * Уникальный идентификатор пользователя.
+     * Автоматически генерируется при добавлении нового пользователя в базу данных.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(unique = true, nullable = false)
-    private String name;
+    /**
+     * Уникальное имя пользователя.
+     */
+    private String username;
 
-    @Column(nullable = false)
+    /**
+     * Пароль пользователя.
+     */
     private String password;
-    
-    private String roles;
+
+    /**
+     * Роли пользователя.
+     */
+    private HashSet<UserRole> userRoles;
+
+    /**
+     * Дата создания аккаунта пользователя.
+     */
+    private Instant createAt;
+
+    /**
+     * Дата обновления аккаунта пользователя.
+     */
+    private Instant updateAt;
 }

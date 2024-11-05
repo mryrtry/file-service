@@ -1,8 +1,7 @@
-package org.mryrt.file_service.Configuration;
+package org.mryrt.file_service.Auth.Configuration;
 
 // Custom UserInfoService, AuthFilter
-import org.mryrt.file_service.Filter.JwtAuthFilter;
-import org.mryrt.file_service.Service.UserInfoService;
+import org.mryrt.file_service.Auth.Filter.JwtAuthFilter;
 
 // Spring annotations
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,15 +35,8 @@ public class SecurityConfig {
     @Autowired
     private JwtAuthFilter authFilter;
 
-    /**
-     * Создает и возвращает экземпляр UserDetailsService.
-     *
-     * @return UserDetailsService - кастомный сервис для загрузки данных о пользователе.
-     */
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return new UserInfoService();
-    }
+    @Autowired
+    private UserDetailsService userDetailsService;
 
     /**
      * Настраивает цепочку фильтров безопасности.
@@ -57,18 +49,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Отключает защиту CSRF для API
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/welcome", "/auth/addNewUser ", "/auth/generateToken").permitAll() // Доступ без аутентификации
-                        .requestMatchers("/auth/user/**").hasAuthority("ROLE_USER") // Доступ для пользователей с ролью USER
-                        .requestMatchers("/auth/admin/**").hasAuthority("ROLE_ADMIN") // Доступ для пользователей с ролью ADMIN
-                        .anyRequest().authenticated() // Защита всех остальных эндпоинтов
+                        .requestMatchers("/auth/register", "/auth/getToken").permitAll()
+                        .requestMatchers("/auth/admin/**").hasAuthority("ADMIN")
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Устанавливает политику сессий в STATELESS
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .authenticationProvider(authenticationProvider()) // Добавляет кастомный провайдер аутентификации
-                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class); // Добавляет фильтр JWT перед стандартным фильтром аутентификации
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -81,7 +72,7 @@ public class SecurityConfig {
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-        authenticationProvider.setUserDetailsService(userDetailsService());
+        authenticationProvider.setUserDetailsService(userDetailsService);
         authenticationProvider.setPasswordEncoder(passwordEncoder());
         return authenticationProvider;
     }

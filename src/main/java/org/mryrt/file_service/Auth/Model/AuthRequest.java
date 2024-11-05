@@ -1,13 +1,7 @@
-package org.mryrt.file_service.Model;
+package org.mryrt.file_service.Auth.Model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class AuthRequest {
-    private String username;
-    private String password;
-}
+/**
+ * @param username никнейм пользователя.
+ * @param password пароль от профиля пользователя.
+ */
+public record AuthRequest(String username, String password) {}
