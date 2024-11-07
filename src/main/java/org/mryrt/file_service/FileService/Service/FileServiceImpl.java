@@ -30,6 +30,7 @@ import java.io.FileNotFoundException;
 // Java util
 import java.io.IOException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -151,9 +152,38 @@ public class FileServiceImpl implements FileService {
         }
         if (file.delete()) {
             log.info("File {} deleted successfully from user {} repository", fileName, username);
+            fileMetaRepository.delete(fileMeta);
         } else {
             log.warn("Could not delete file {} from user {} repository", fileName, username);
             throw new FileNotFoundException("Could not delete file");
+        }
+    }
+
+    private List<FileMetaDTO> inDeleteAll(UserDTO user, File directory, List<FileMeta> files) {
+        List<FileMeta> notFoundFiles = new ArrayList<>();
+        files.forEach(file -> {
+            try {
+                inDeleteFile(user.getUsername(), file, directory);
+            } catch (FileNotFoundException exception) {
+                notFoundFiles.add(file);
+            }
+        });
+        if (!notFoundFiles.isEmpty()) {
+            files.removeAll(notFoundFiles);
+            fileMetaRepository.deleteAll(notFoundFiles);
+        }
+        return files.stream().map(FileMetaDTO::new).toList();
+    }
+
+    private void deleteInvalidFiles(UserDTO user, File directory, List<FileMeta> files) {
+        List<FileMeta> invalidFiles = new ArrayList<>();
+        files.forEach(file -> {
+            File invalidFile = new File(directory, file.getUuid() + file.getExtension());
+            if (!invalidFile.exists()) invalidFiles.add(file);
+        });
+        if (!invalidFiles.isEmpty()) {
+            log.warn("Deleted invalid files {} from user {} directory", invalidFiles, user.getUsername());
+            fileMetaRepository.deleteAll(invalidFiles);
         }
     }
 
@@ -227,16 +257,20 @@ public class FileServiceImpl implements FileService {
     @Override
     public List<FileMetaDTO> getAllFiles() {
         UserDTO user = userService.getAuthUser();
+        File directory = assertUserDirectory(user);
         log.info("Searching for files in user {} repository", user.getUsername());
         List<FileMeta> files = fileMetaRepository.findAllByOwnerId(user.getId());
+        deleteInvalidFiles(user, directory, files);
         return files.stream().map(FileMetaDTO::new).toList();
     }
 
     @Override
     public List<FileMetaDTO> getAllFiles(Predicate<FileMeta> predicate) {
         UserDTO user = userService.getAuthUser();
+        File directory = assertUserDirectory(user);
         log.info("Searching for files in user {} repository by predicate", user.getUsername());
         List<FileMeta> files = fileMetaRepository.findAllByOwnerId(user.getId());
+        deleteInvalidFiles(user, directory, files);
         return files.stream().filter(predicate).map(FileMetaDTO::new).toList();
     }
 
@@ -255,14 +289,7 @@ public class FileServiceImpl implements FileService {
         File directory = assertUserDirectory(user);
         List<FileMeta> files = fileMetaRepository.findAllByOwnerId(user.getId());
         log.debug("Processing fileMeta list: {}", files);
-        files.forEach(file -> {
-            try {
-                inDeleteFile(user.getUsername(), file, directory);
-            } catch (FileNotFoundException exception) {
-                files.remove(file);
-            }
-        });
-        return files.stream().map(FileMetaDTO::new).toList();
+        return inDeleteAll(user, directory, files);
     }
 
     @Override
@@ -271,14 +298,8 @@ public class FileServiceImpl implements FileService {
         File directory = assertUserDirectory(user);
         List<FileMeta> files = fileMetaRepository.findAllByOwnerId(user.getId());
         log.debug("Processing fileMeta list: {}", files);
-        files.stream().filter(predicate).forEach(file -> {
-            try {
-                inDeleteFile(user.getUsername(), file, directory);
-            } catch (FileNotFoundException exception) {
-                files.remove(file);
-            }
-        });
-        return files.stream().map(FileMetaDTO::new).toList();
+        files = files.stream().filter(predicate).toList();
+        return inDeleteAll(user, directory, files);
     }
 
     @Override

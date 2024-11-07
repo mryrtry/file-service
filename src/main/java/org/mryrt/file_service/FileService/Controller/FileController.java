@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileNotFoundException;
+import java.util.List;
 
 @RestController
 @RequestMapping("api/files")
@@ -40,6 +41,40 @@ public class FileController {
         } catch (Exception exception) {
             return ResponseEntity.badRequest().body(exception.getMessage());
         }
+    }
+
+    @GetMapping("/get/all")
+    public ResponseEntity getFileAll() {
+        List<FileMetaDTO> fileList = fileService.getAllFiles();
+        return ResponseEntity.ok(fileList);
+    }
+
+    @GetMapping("/get/startsWith/{startsWith}")
+    public ResponseEntity getFileStarts(@PathVariable String startsWith) {
+        List<FileMetaDTO> fileList = fileService.getAllFiles(file -> file.getName().startsWith(startsWith));
+        return ResponseEntity.ok(fileList);
+    }
+
+    @DeleteMapping("/delete/uuid/{uuid}")
+    public ResponseEntity deleteFileUuid(@PathVariable String uuid) {
+        try {
+            FileMetaDTO file = fileService.deleteFile(uuid);
+            return ResponseEntity.ok(file);
+        } catch (FileNotFoundException exception) {
+            return ResponseEntity.badRequest().body(exception.getMessage());
+        }
+    }
+
+    @DeleteMapping("delete/all")
+    public ResponseEntity deleteFileAll() {
+        List<FileMetaDTO> fileList = fileService.deleteAllFiles();
+        return ResponseEntity.ok(fileList);
+    }
+
+    @DeleteMapping("delete/all/startsWith/{startsWith}")
+    public ResponseEntity deleteFileStarts(@PathVariable String startsWith) {
+        List<FileMetaDTO> files = fileService.deleteAllFiles(file -> file.getName().startsWith(startsWith));
+        return ResponseEntity.ok(files);
     }
 
     @GetMapping("/touch/uuid/{uuid}")
