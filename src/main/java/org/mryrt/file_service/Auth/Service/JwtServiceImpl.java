@@ -1,8 +1,6 @@
 package org.mryrt.file_service.Auth.Service;
 
 // Custom Auth Request
-
-import io.jsonwebtoken.MalformedJwtException;
 import org.mryrt.file_service.Auth.Model.AuthRequest;
 
 // JWT
@@ -11,6 +9,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.MalformedJwtException;
 
 // Spring annotations
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,12 +26,13 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 // Java security
 import java.security.Key;
 
-// Java util classes
+// Java util
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+// Lombok logger
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -42,7 +42,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Component
 @Slf4j
-public class JwtService {
+public class JwtServiceImpl implements JwtService {
     /**
      * Секретный ключ для подписи JWT, извлекаемый из конфигурации.
      */
@@ -56,31 +56,10 @@ public class JwtService {
     private int EXPIRATION;
 
     /**
-     * Мэнеджер аутентификации пользователя.
+     * Менеджер аутентификации пользователя.
      */
     @Autowired
     private AuthenticationManager authenticationManager;
-
-    /**
-     * Аутентифицирует пользователя и генерирует JWT токен.
-     *
-     * @param authRequest объект {@link AuthRequest}, содержащий имя пользователя и пароль.
-     * @return сгенерированный JWT токен.
-     * @throws UsernameNotFoundException если аутентификация не удалась.
-     */
-    public String authenticate(AuthRequest authRequest) {
-        log.info("Authenticating user: {}", authRequest.username());
-        UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(authRequest.username(), authRequest.password());
-        Authentication authentication = authenticationManager.authenticate(authToken);
-        if (authentication.isAuthenticated()) {
-            String token = generateToken(authRequest.username());
-            log.info("User {} authenticated successfully. Token generated.", authRequest.username());
-            return token;
-        }
-        log.warn("Authentication failed for user: {}", authRequest.username());
-        throw new UsernameNotFoundException("Invalid username or password");
-    }
 
     /**
      * Генерирует JWT для указанного пользователя.
@@ -123,42 +102,6 @@ public class JwtService {
     }
 
     /**
-     * Извлекает имя пользователя из токена.
-     *
-     * @param token JWT токен.
-     * @return имя пользователя, извлеченное из токена.
-     */
-    public String extractUsername(String token) throws MalformedJwtException {
-        log.debug("Extracting username from token.");
-        return extractClaim(token, Claims::getSubject);
-    }
-
-    /**
-     * Извлекает дату истечения токена.
-     *
-     * @param token JWT токен.
-     * @return дата истечения токена.
-     */
-    public Date extractExpiration(String token) throws MalformedJwtException {
-        log.debug("Extracting expiration date from token.");
-        return extractClaim(token, Claims::getExpiration);
-    }
-
-    /**
-     * Извлекает указанный клейм из токена.
-     *
-     * @param token          JWT токен.
-     * @param claimsResolver функция для извлечения клейма.
-     * @param <T>            тип клейма.
-     * @return извлеченное значение к
-     */
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) throws MalformedJwtException {
-        log.debug("Extracting claims from token.");
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
-    }
-
-    /**
      * Извлекает все клеймы из токена.
      *
      * @param token JWT токен.
@@ -174,6 +117,20 @@ public class JwtService {
     }
 
     /**
+     * Извлекает указанный клейм из токена.
+     *
+     * @param token          JWT токен.
+     * @param claimsResolver функция для извлечения клейма.
+     * @param <T>            тип клейма.
+     * @return извлеченное значение к
+     */
+    private  <T> T extractClaim(String token, Function<Claims, T> claimsResolver) throws MalformedJwtException {
+        log.debug("Extracting claims from token.");
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    /**
      * Проверяет, истек ли токен.
      *
      * @param token JWT токен.
@@ -184,18 +141,35 @@ public class JwtService {
         return extractExpiration(token).before(new Date());
     }
 
-    /**
-     * Проверяет валидность токена по сравнению с данными пользователя.
-     * Этот метод извлекает имя пользователя из токена и сравнивает его с именем пользователя,
-     * предоставленным в объекте UserDetails. Также проверяется, не истек ли токен.
-     *
-     * @param token       JWT токен, который необходимо проверить.
-     * @param userDetails объект UserDetails, содержащий информацию о пользователе,
-     *                    с которой будет производиться сравнение.
-     * @return true, если токен валиден (имя пользователя совпадает и токен не истек),
-     * иначе false.
-     */
-    public Boolean validateToken(String token, UserDetails userDetails) {
+    @Override
+    public String authenticate(AuthRequest authRequest) throws UsernameNotFoundException {
+        log.info("Authenticating user: {}", authRequest.username());
+        UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(authRequest.username(), authRequest.password());
+        Authentication authentication = authenticationManager.authenticate(authToken);
+        if (authentication.isAuthenticated()) {
+            String token = generateToken(authRequest.username());
+            log.info("User {} authenticated successfully. Token generated.", authRequest.username());
+            return token;
+        }
+        log.warn("Authentication failed for user: {}", authRequest.username());
+        throw new UsernameNotFoundException("Invalid username or password");
+    }
+
+    @Override
+    public String extractUsername(String token) throws MalformedJwtException {
+        log.debug("Extracting username from token.");
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    @Override
+    public Date extractExpiration(String token) throws MalformedJwtException {
+        log.debug("Extracting expiration date from token.");
+        return extractClaim(token, Claims::getExpiration);
+    }
+
+    @Override
+    public Boolean validateToken(String token, UserDetails userDetails) throws MalformedJwtException {
         log.debug("Validating token for user: {}", userDetails.getUsername());
         final String username = extractUsername(token);
         boolean isValid = (username.equals(userDetails.getUsername()) && !isTokenExpired(token));

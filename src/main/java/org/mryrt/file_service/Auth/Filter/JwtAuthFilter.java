@@ -1,5 +1,6 @@
 package org.mryrt.file_service.Auth.Filter;
 
+// Custom JwtService, UserServiceImpl
 import org.mryrt.file_service.Auth.Service.JwtService;
 import org.mryrt.file_service.Auth.Service.UserServiceImpl;
 
@@ -10,9 +11,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 // Spring annotations
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Component;
 
 // Spring security
@@ -23,6 +23,9 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 
 // Spring Web
 import org.springframework.web.filter.OncePerRequestFilter;
+
+// Lombok logger
+import lombok.extern.slf4j.Slf4j;
 
 // Exceptions
 import java.io.IOException;
@@ -43,43 +46,54 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     /**
      * Обрабатывает входящие HTTP-запросы для проверки JWT и настройки аутентификации.
      *
-     * @param request   объект HttpServletRequest, представляющий входящий запрос.
-     * @param response  объект HttpServletResponse, представляющий исходящий ответ.
+     * @param request     объект HttpServletRequest, представляющий входящий запрос.
+     * @param response    объект HttpServletResponse, представляющий исходящий ответ.
      * @param filterChain цепочка фильтров для продолжения обработки запроса.
      * @throws ServletException если возникает ошибка при обработке запроса.
      * @throws IOException      если возникает ошибка ввода-вывода.
      */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        SecurityContext context = SecurityContextHolder.getContext();
         String authHeader = request.getHeader("Authorization");
         String token = null;
         String username = null;
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7);
-            username = jwtService.extractUsername(token);
-        }
+        try {
+            // Проверка на наличие заголовка Authorization и его корректность
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                token = authHeader.substring(7);
+                username = jwtService.extractUsername(token);
+                log.info("Extracted username: {}", username);
+            } else {
+                log.warn("Authorization header is missing or invalid");
+            }
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            try {
+            // Проверка аутентификации
+            if (username != null && context.getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 if (jwtService.validateToken(token, userDetails)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities()
-                    );
+                            userDetails, null,
+                            userDetails.getAuthorities());
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    context.setAuthentication(authToken);
+                    log.info("User {} authenticated successfully", username);
                 } else {
-                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Not Authorized");
-                    return;
+                    // Возвращаем ответ с ошибкой, если токен недействителен
+                    log.warn("Invalid JWT token for user: {}", username);
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT");
+                    return; // Прерываем цепочку фильтров
                 }
-            } catch (UsernameNotFoundException e) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Not Authorized");
-                return;
             }
+        } catch (Exception e) {
+            // Обработка исключений, например, если произошла ошибка извлечения пользователя
+            log.warn("Authentication error: {}", e.getMessage());
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+            return; // Прерываем цепочку фильтров
         }
+
+        // Продолжение фильтрации
         filterChain.doFilter(request, response);
     }
 }

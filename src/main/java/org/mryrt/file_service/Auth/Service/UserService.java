@@ -1,10 +1,14 @@
 package org.mryrt.file_service.Auth.Service;
 
+// Custom Model User (DTO), User role
 import org.mryrt.file_service.Auth.Model.User;
 import org.mryrt.file_service.Auth.Model.UserDTO;
 import org.mryrt.file_service.Auth.Model.UserRole;
+
+// Spring Security
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+// Java Util
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -13,9 +17,6 @@ import java.util.function.Predicate;
  * Предоставляет методы для добавления, получения, удаления пользователей и работы с ролями пользователей.
  */
 public interface UserService {
-
-    // TODO: Изъятие прав администратора не обнуляет токен с правами администратора.
-
     /**
      * Добавляет нового пользователя в репозиторий.
      * <p>
@@ -25,7 +26,7 @@ public interface UserService {
      * @param user объект {@link User}, содержащий информацию о новом пользователе.
      * @return UserDTO - сохраненный объект пользователя.
      */
-    UserDTO addUser(User user);
+    UserDTO uploadUser(User user);
 
     /**
      * Получает пользователя по уникальному идентификатору.
@@ -44,6 +45,13 @@ public interface UserService {
      * @throws UsernameNotFoundException если пользователь не найден.
      */
     UserDTO getUser(String username) throws UsernameNotFoundException;
+
+    /**
+     * Получает текущего пользователя из контекста Spring Security.
+     *
+     * @return UserDTO - объект с информацией о пользователе.
+     */
+    UserDTO getAuthUser() throws UsernameNotFoundException;
 
     /**
      * Получает список всех пользователей.

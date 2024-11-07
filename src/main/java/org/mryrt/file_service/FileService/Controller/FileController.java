@@ -1,43 +1,54 @@
 package org.mryrt.file_service.FileService.Controller;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+// Custom file service and FileMetaModel
+import org.mryrt.file_service.FileService.Model.FileMetaDTO;
+import org.mryrt.file_service.FileService.Service.FileService;
+
+// Spring annotations
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
+
+// Spring web
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 
 @RestController
-@RequestMapping("/api/files")
-public class FileUploadController {
+@RequestMapping("api/files")
+public class FileController {
 
-    // Путь, где будут сохраняться файлы
-    private static final String UPLOAD_DIR = "D:\\ITMO\\ПРОЕКТЫ\\file-service\\src\\main\\java\\org\\mryrt\\file_service\\Uploads\\";
+    // TODO: docs и оставшиеся эндпоинты
+
+    @Autowired
+    FileService fileService;
 
     @PostMapping("/upload")
-    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) {
-        // Проверка на пустой файл
-        if (file.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Файл не должен быть пустым");
-        }
-
-        // Создание директории, если она не существует
-        File directory = new File(UPLOAD_DIR);
-        if (!directory.exists()) {
-            directory.mkdirs();
-        }
-
-        // Путь для сохранения файла
-        File destFile = new File(directory, file.getOriginalFilename());
-
+    public ResponseEntity uploadFile(@RequestParam("file") MultipartFile file) {
         try {
-            // Сохранение файла
-            file.transferTo(destFile);
-            return ResponseEntity.ok("Файл успешно загружен: " + destFile.getAbsolutePath());
-        } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ошибка при загрузке файла");
+            FileMetaDTO fileMeta = fileService.uploadFile(file);
+            return ResponseEntity.ok(fileMeta);
+        } catch (Exception exception) {
+            return ResponseEntity.badRequest().body(exception.getMessage());
+        }
+    }
+
+    @GetMapping("/get/uuid/{uuid}")
+    public ResponseEntity getFileUuid(@PathVariable String uuid) {
+        try {
+            return fileService.getFile(uuid);
+        } catch (Exception exception) {
+            return ResponseEntity.badRequest().body(exception.getMessage());
+        }
+    }
+
+    @GetMapping("/touch/uuid/{uuid}")
+    public ResponseEntity touchFileUuid(@PathVariable String uuid) {
+        try {
+            FileMetaDTO fileMeta = fileService.touchFile(uuid);
+            return ResponseEntity.ok(fileMeta);
+        } catch (FileNotFoundException exception) {
+            return ResponseEntity.badRequest().body(exception.getMessage());
         }
     }
 }

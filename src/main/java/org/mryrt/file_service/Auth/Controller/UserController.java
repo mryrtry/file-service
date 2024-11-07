@@ -25,7 +25,7 @@ import java.util.List;
  * получения информации о пользователе и генерации JWT токенов для аутентификации.
  */
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("api/auth")
 public class UserController {
     @Autowired
     private UserService userService;
@@ -40,9 +40,9 @@ public class UserController {
      * @return {@link ResponseEntity} с объектом {@link UserDTO} зарегистрированного пользователя.
      */
     @PostMapping("/register")
-    public ResponseEntity register(@RequestBody User user) {
-        UserDTO userDto = userService.addUser(user);
-        return ResponseEntity.ok().body(userDto);
+    public ResponseEntity<UserDTO> register(@RequestBody User user) {
+        UserDTO userDto = userService.uploadUser(user);
+        return ResponseEntity.ok(userDto);
     }
 
     /**
@@ -52,10 +52,10 @@ public class UserController {
      * @return {@link ResponseEntity} с JWT токеном или статус 404, если пользователь не найден.
      */
     @PostMapping("/getToken")
-    public ResponseEntity getToken(@RequestBody AuthRequest authRequest) {
+    public ResponseEntity<String> getToken(@RequestBody AuthRequest authRequest) {
         try {
             String token = jwtService.authenticate(authRequest);
-            return ResponseEntity.ok().body(token);
+            return ResponseEntity.ok(token);
         } catch (UsernameNotFoundException exception) {
             return ResponseEntity.notFound().build();
         }
@@ -71,7 +71,7 @@ public class UserController {
     public ResponseEntity<UserDTO> getId(@PathVariable("id") int id) {
         try {
             UserDTO userDTO = userService.getUser(id);
-            return ResponseEntity.ok().body(userDTO);
+            return ResponseEntity.ok(userDTO);
         } catch (UsernameNotFoundException exception) {
             return ResponseEntity.notFound().build();
         }
@@ -87,7 +87,7 @@ public class UserController {
     public ResponseEntity<UserDTO> getUsername(@PathVariable("username") String username) {
         try {
             UserDTO userDTO = userService.getUser(username);
-            return ResponseEntity.ok().body(userDTO);
+            return ResponseEntity.ok(userDTO);
         } catch (UsernameNotFoundException exception) {
             return ResponseEntity.notFound().build();
         }
@@ -101,7 +101,7 @@ public class UserController {
     @GetMapping("admin/get/all")
     public ResponseEntity<List<UserDTO>> getAll() {
         List<UserDTO> userDTOList = userService.getAllUsers();
-        return ResponseEntity.ok().body(userDTOList);
+        return ResponseEntity.ok(userDTOList);
     }
 
     /**
@@ -112,9 +112,9 @@ public class UserController {
      */
     @GetMapping("admin/get/role")
     public ResponseEntity<List<UserDTO>> getAllRole(@RequestParam String role) {
-        UserRole userRole = UserRole.valueOf(role);
-        List<UserDTO> userDTOList = userService.getAllUsers(user -> user.getUserRoles().contains(userRole));
-        return ResponseEntity.ok().body(userDTOList);
+        List<UserDTO> userDTOList = userService
+                .getAllUsers(user -> user.getUserRoles().contains(UserRole.valueOf(role)));
+        return ResponseEntity.ok(userDTOList);
     }
 
     /**
@@ -127,7 +127,7 @@ public class UserController {
     public ResponseEntity<UserDTO> deleteUserId(@PathVariable int id) {
         try {
             UserDTO userDTO = userService.deleteUser(id);
-            return ResponseEntity.ok().body(userDTO);
+            return ResponseEntity.ok(userDTO);
         } catch (UsernameNotFoundException exception) {
             return ResponseEntity.notFound().build();
         }
@@ -143,7 +143,7 @@ public class UserController {
     public ResponseEntity<UserDTO> deleteUserUsername(@PathVariable String username) {
         try {
             UserDTO userDTO = userService.deleteUser(username);
-            return ResponseEntity.ok().body(userDTO);
+            return ResponseEntity.ok(userDTO);
         } catch (UsernameNotFoundException exception) {
             return ResponseEntity.notFound().build();
         }
@@ -157,7 +157,7 @@ public class UserController {
     @DeleteMapping("admin/delete/all")
     public ResponseEntity<List<UserDTO>> deleteAll() {
         List<UserDTO> userDTOList = userService.deleteAllUsers();
-        return ResponseEntity.ok().body(userDTOList);
+        return ResponseEntity.ok(userDTOList);
     }
 
     /**
@@ -170,7 +170,7 @@ public class UserController {
     public ResponseEntity<UserDTO> assignId(@PathVariable int id) {
         try {
             UserDTO userDTO = userService.addUserRoles(id, UserRole.ADMIN);
-            return ResponseEntity.ok().body(userDTO);
+            return ResponseEntity.ok(userDTO);
         } catch (UsernameNotFoundException exception) {
             return ResponseEntity.notFound().build();
         }
@@ -186,7 +186,7 @@ public class UserController {
     public ResponseEntity<UserDTO> assignUsername(@PathVariable String username) {
         try {
             UserDTO userDTO = userService.addUserRoles(username, UserRole.ADMIN);
-            return ResponseEntity.ok().body(userDTO);
+            return ResponseEntity.ok(userDTO);
         } catch (UsernameNotFoundException exception) {
             return ResponseEntity.notFound().build();
         }
@@ -202,7 +202,7 @@ public class UserController {
     public ResponseEntity<UserDTO> revokeId(@PathVariable int id) {
         try {
             UserDTO userDTO = userService.removeUserRoles(id, UserRole.ADMIN);
-            return ResponseEntity.ok().body(userDTO);
+            return ResponseEntity.ok(userDTO);
         } catch (UsernameNotFoundException exception) {
             return ResponseEntity.notFound().build();
         }
@@ -218,7 +218,7 @@ public class UserController {
     public ResponseEntity<UserDTO> revokeUsername(@PathVariable String username) {
         try {
             UserDTO userDTO = userService.removeUserRoles(username, UserRole.ADMIN);
-            return ResponseEntity.ok().body(userDTO);
+            return ResponseEntity.ok(userDTO);
         } catch (UsernameNotFoundException exception) {
             return ResponseEntity.notFound().build();
         }

@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.data.annotation.CreatedDate;
 
 // Java util
 import java.time.Instant;
@@ -48,6 +49,7 @@ public class User {
     /**
      * Дата создания аккаунта пользователя.
      */
+    @CreatedDate
     private Instant createAt;
 
     /**

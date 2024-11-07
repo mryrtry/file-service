@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 // Spring security
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -189,7 +191,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
     }
 
     @Override
-    public UserDTO addUser(User user) {
+    public UserDTO uploadUser(User user) {
         log.info("Adding new user: {}", user.getUsername());
         processUser(user);
         userRepository.save(user);
@@ -211,6 +213,17 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         User user = getUserByUsername(username);
         log.info("User {} successfully get", username);
         return new UserDTO(user);
+    }
+
+    @Override
+    public UserDTO getAuthUser() throws UsernameNotFoundException {
+        log.debug("Getting authentication from security context");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        log.info("Getting user from security context");
+        if (authentication != null && authentication.isAuthenticated())
+            return getUser(authentication.getName());
+        log.warn("Authentication not found or user isn't authenticated");
+        throw new UsernameNotFoundException("User not found");
     }
 
     @Override

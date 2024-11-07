@@ -7,5 +7,17 @@
     {
       "name": "jwt.expiration",
       "type": "java.lang.String"
+    },
+    {
+      "name": "file.service.upload-dir",
+      "type": "java.lang.String"
+    },
+    {
+      "name": "file.service.max-file-size",
+      "type": "java.lang.String"
+    },
+    {
+      "name": "file.service.max-folder-size",
+      "type": "java.lang.String"
     }
   ] }
