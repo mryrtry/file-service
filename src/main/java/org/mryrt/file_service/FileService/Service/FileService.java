@@ -1,6 +1,5 @@
 package org.mryrt.file_service.FileService.Service;
 
-// Custom FileMeta (DTO), exceptions
 import org.mryrt.file_service.FileService.Exceptions.FileSizeExceededException;
 import org.mryrt.file_service.FileService.Exceptions.NotEnoughSpaceException;
 import org.mryrt.file_service.FileService.Model.FileMeta;

@@ -1,6 +1,5 @@
 package org.mryrt.file_service.FileService.Model;
 
-// Lombok annotations
 import lombok.Data;
 
 // Java time
@@ -20,7 +19,7 @@ public class FileMetaDTO {
 
     private int id;
 
-    private int ownerId;
+    private long ownerId;
 
     private String name;
 

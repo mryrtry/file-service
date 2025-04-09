@@ -1,7 +1,5 @@
 package org.mryrt.file_service.FileService.Service;
 
-// Custom FileMeta (DTO), repository
-
 import org.mryrt.file_service.Auth.Model.UserDTO;
 import org.mryrt.file_service.Auth.Service.UserService;
 import org.mryrt.file_service.FileService.Exceptions.FileSizeExceededException;
@@ -116,7 +114,7 @@ public class FileServiceImpl implements FileService {
      */
     private File assertUserDirectory(UserDTO user) {
         log.debug("Checking user '{}' directory exists", user.getUsername());
-        File directory = new File(UPLOAD_DIR + "\\" + user.getUsername());
+        File directory = new File(UPLOAD_DIR + "/" + user.getUsername());
         if (!directory.exists() && directory.mkdir())
             log.info("User  {} directory created", user.getUsername());
         return directory;
@@ -175,6 +173,7 @@ public class FileServiceImpl implements FileService {
         return files.stream().map(FileMetaDTO::new).toList();
     }
 
+    // todo: если File last modified не совпал с file meta last modified - кидать алёрт
     private void deleteInvalidFiles(UserDTO user, File directory, List<FileMeta> files) {
         List<FileMeta> invalidFiles = new ArrayList<>();
         files.forEach(file -> {
@@ -184,6 +183,7 @@ public class FileServiceImpl implements FileService {
         if (!invalidFiles.isEmpty()) {
             log.warn("Deleted invalid files {} from user {} directory", invalidFiles, user.getUsername());
             fileMetaRepository.deleteAll(invalidFiles);
+            files.removeAll(invalidFiles);
         }
     }
 
@@ -249,7 +249,7 @@ public class FileServiceImpl implements FileService {
             throw new FileNotFoundException("File resource not found");
         }
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileMeta.getName() + fileMeta.getExtension() + "\"");
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileMeta.getName() + "\"");
         headers.add(HttpHeaders.CONTENT_TYPE, "application/octet-stream");
         return new ResponseEntity(resource, headers, HttpStatus.OK);
     }

@@ -1,15 +1,11 @@
 package org.mryrt.file_service.FileService.Repository;
 
-// Custom file meta
 import org.mryrt.file_service.FileService.Model.FileMeta;
 
-// Spring annotations
 import org.springframework.stereotype.Repository;
 
-// Jpa
 import org.springframework.data.jpa.repository.JpaRepository;
 
-// Java util
 import java.util.List;
 import java.util.Optional;
 
@@ -32,7 +28,7 @@ public interface FileMetaRepository extends JpaRepository<FileMeta, Integer> {
      * @param ownerId идентификатор владельца
      * @return {@link Optional} с {@link FileMeta}, если файл найден, или {@link Optional#empty()} в противном случае
      */
-    Optional<FileMeta> findByUuidAndOwnerId(String uuid, int ownerId);
+    Optional<FileMeta> findByUuidAndOwnerId(String uuid, long ownerId);
 
     /**
      * Ищет все метаданные файлов по идентификатору владельца.
@@ -40,5 +36,5 @@ public interface FileMetaRepository extends JpaRepository<FileMeta, Integer> {
      * @param ownerId - идентификатор владельца файла.
      * @return {@link List<FileMeta>}, список всех метаданных найденных файлов.
      */
-    List<FileMeta> findAllByOwnerId(int ownerId);
+    List<FileMeta> findAllByOwnerId(long ownerId);
 }

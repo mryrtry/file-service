@@ -1,14 +1,9 @@
 package org.mryrt.file_service.FileService.Controller;
 
-// Custom file service and FileMetaModel
 import org.mryrt.file_service.FileService.Model.FileMetaDTO;
 import org.mryrt.file_service.FileService.Service.FileService;
-
-// Spring annotations
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
-
-// Spring web
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -86,4 +81,5 @@ public class FileController {
             return ResponseEntity.badRequest().body(exception.getMessage());
         }
     }
+
 }

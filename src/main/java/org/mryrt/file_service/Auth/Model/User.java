@@ -1,59 +1,46 @@
 package org.mryrt.file_service.Auth.Model;
 
-// Jakarta persistence
 import jakarta.persistence.*;
-
-// Lombok
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
+import org.hibernate.annotations.NaturalId;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-// Java util
-import java.time.Instant;
-import java.util.HashSet;
+import java.time.LocalDateTime;
+import java.util.Set;
 
-/**
- * Класс модели для представления информации о пользователе.
- * Содержит поля для хранения имени пользователя, пароля и ролей.
- */
 @Entity
-@Table(name = "file_service_user")
+@Table(name = "web_users")
 @Data
 @NoArgsConstructor
-@ToString
+@EntityListeners(AuditingEntityListener.class)
 public class User {
-    /**
-     * Уникальный идентификатор пользователя.
-     * Автоматически генерируется при добавлении нового пользователя в базу данных.
-     */
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    @Column(unique = true)
+    private long id;
 
-    /**
-     * Уникальное имя пользователя.
-     */
+    @NaturalId
+    @Column(unique = true, nullable = false)
     private String username;
 
-    /**
-     * Пароль пользователя.
-     */
+    @Column(nullable = false)
     private String password;
 
-    /**
-     * Роли пользователя.
-     */
-    private HashSet<UserRole> userRoles;
+    @Enumerated(EnumType.STRING)
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Column(nullable = false)
+    private Set<UserRole> roles;
 
-    /**
-     * Дата создания аккаунта пользователя.
-     */
     @CreatedDate
-    private Instant createAt;
+    @Column(updatable = false, columnDefinition = "TIMESTAMP")
+    private LocalDateTime createdAt;
 
-    /**
-     * Дата обновления аккаунта пользователя.
-     */
-    private Instant updateAt;
+    @LastModifiedDate
+    @Column(nullable = false, columnDefinition = "TIMESTAMP")
+    private LocalDateTime updatedAt;
+
 }

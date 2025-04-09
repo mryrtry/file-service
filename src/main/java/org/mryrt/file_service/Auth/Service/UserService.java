@@ -1,142 +1,78 @@
 package org.mryrt.file_service.Auth.Service;
 
-// Custom Model User (DTO), User role
-import org.mryrt.file_service.Auth.Model.User;
-import org.mryrt.file_service.Auth.Model.UserDTO;
-import org.mryrt.file_service.Auth.Model.UserRole;
-
-// Spring Security
+import lombok.extern.slf4j.Slf4j;
+import org.mryrt.file_service.Auth.Exception.InvalidCredentialsException;
+import org.mryrt.file_service.Auth.Model.*;
+import org.mryrt.file_service.Auth.Repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
-// Java Util
-import java.util.List;
-import java.util.function.Predicate;
+import java.util.Collections;
+import java.util.HashSet;
 
-/**
- * Интерфейс для управления пользователями в системе.
- * Предоставляет методы для добавления, получения, удаления пользователей и работы с ролями пользователей.
- */
-public interface UserService {
-    /**
-     * Добавляет нового пользователя в репозиторий.
-     * <p>
-     * Пароль пользователя шифруется перед сохранением, и пользователю назначается роль {@link UserRole#USER}.
-     * </p>
-     *
-     * @param user объект {@link User}, содержащий информацию о новом пользователе.
-     * @return UserDTO - сохраненный объект пользователя.
-     */
-    UserDTO uploadUser(User user);
+@Service
+@Slf4j
+public class UserService implements UserDetailsService {
 
-    /**
-     * Получает пользователя по уникальному идентификатору.
-     *
-     * @param id уникальный идентификатор пользователя.
-     * @return UserDTO - объект с информацией о пользователе.
-     * @throws UsernameNotFoundException если пользователь не найден.
-     */
-    UserDTO getUser(int id) throws UsernameNotFoundException;
+    @Autowired
+    private UserRepository userRepository;
 
-    /**
-     * Получает пользователя по уникальному идентификатору.
-     *
-     * @param username имя пользователя.
-     * @return UserDTO - объект с информацией о пользователе.
-     * @throws UsernameNotFoundException если пользователь не найден.
-     */
-    UserDTO getUser(String username) throws UsernameNotFoundException;
+    @Autowired
+    private JwtService jwtService;
 
-    /**
-     * Получает текущего пользователя из контекста Spring Security.
-     *
-     * @return UserDTO - объект с информацией о пользователе.
-     */
-    UserDTO getAuthUser() throws UsernameNotFoundException;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-    /**
-     * Получает список всех пользователей.
-     *
-     * @return List<UserDTO> - список объектов с информацией о всех пользователях.
-     */
-    List<UserDTO> getAllUsers();
+    private void _processUser(User user, SignUpRequest signUpRequest) {
+        user.setUsername(signUpRequest.getUsername());
+        user.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
+        user.setRoles(new HashSet<>(Collections.singletonList(UserRole.USER)));
+    }
 
-    /**
-     * Получает список всех пользователей, отфильтрованных по заданному предикату.
-     *
-     * @param predicate предикат {@link Predicate}, который определяет критерии фильтрации пользователей.
-     * @return список {@link List} объектов {@link UserDTO}, которые соответствуют критериям фильтрации,
-     *         определенным предикатом. Если ни один пользователь не соответствует критериям, возвращается пустой список.
-     */
-    List<UserDTO> getAllUsers(Predicate<User> predicate);
+    private User _getUserId(long id) {
+        return userRepository
+                .findById(id)
+                .orElseThrow(() -> new InvalidCredentialsException("id", "id %d does not exist".formatted(id)));
+    }
 
-    /**
-     * Удаляет пользователя по ID.
-     *
-     * @param id ID пользователя, которого нужно удалить.
-     * @return UserDTO - объект {@link UserDTO}, представляющий удаленного пользователя.
-     * @throws UsernameNotFoundException если пользователь с указанным ID не найден.
-     */
-    UserDTO deleteUser(int id) throws UsernameNotFoundException;
+    private User _getUserUsername(String username) {
+        return userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new InvalidCredentialsException("username", "username %s does not exist".formatted(username)));
+    }
 
-    /**
-     * Удаляет пользователя по ID.
-     *
-     * @param username Имя пользователя, которого нужно удалить.
-     * @return UserDTO - объект {@link UserDTO}, представляющий удаленного пользователя.
-     * @throws UsernameNotFoundException если пользователь с указанным ID не найден.
-     */
-    UserDTO deleteUser(String username) throws UsernameNotFoundException;
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return new CustomUserDetails(userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("username %s does not exist".formatted(username))));
+    }
 
-    /**
-     * Удаляет всех пользователей из репозитория.
-     *
-     * @return список объектов {@link UserDTO}, представляющих всех удаленных пользователей.
-     */
-    List<UserDTO> deleteAllUsers();
+    public UserDTO userSignUp(SignUpRequest signUpRequest) {
+        User user = new User();
+        _processUser(user, signUpRequest);
+        User savedUser = userRepository.save(user);
+        return new UserDTO(savedUser);
+    }
 
-    /**
-     * Удаляет пользователей из репозитория, соответствующих заданному предикату.
-     *
-     * @param predicate условие фильтрации пользователей. Если значение
-     *                 равно {@code null}, будет удалено всех пользователей.
-     * @return список объектов {@link UserDTO}, представляющих всех удаленных пользователей,
-     *         которые соответствовали предикату.
-     */
-    List<UserDTO> deleteAllUsers(Predicate<User> predicate);
+    public String userLogIn(LogInRequest logInRequest) {
+        User user = _getUserUsername(logInRequest.getUsername());
+        if (!passwordEncoder.matches(logInRequest.getPassword(), user.getPassword()))
+            throw new InvalidCredentialsException("password", "Wrong password");
+        return jwtService.generateToken(user.getUsername());
+    }
 
-    /**
-     * Добавляет роли пользователю по его идентификатору.
-     *
-     * @param id    Идентификатор пользователя.
-     * @param roles Роли, которые необходимо добавить пользователю.
-     * @return Объект UserDTO, представляющий обновленного пользователя с новыми ролями.
-     */
-    UserDTO addUserRoles(int id, UserRole... roles);
+    public UserDTO getAuthUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated())
+            return new UserDTO(_getUserUsername(authentication.getName()));
+        throw new InvalidCredentialsException("username", "username %s does not exist".formatted(authentication.getName()));
+    }
 
-    /**
-     * Добавляет роли пользователю по его имени пользователя.
-     *
-     * @param username Имя пользователя.
-     * @param roles    Роли, которые необходимо добавить пользователю.
-     * @return Объект UserDTO, представляющий обновленного пользователя с новыми ролями.
-     */
-    UserDTO addUserRoles(String username, UserRole... roles);
-
-    /**
-     * Удаляет роли у пользователя по его идентификатору.
-     *
-     * @param id    Идентификатор пользователя.
-     * @param roles Роли, которые необходимо удалить у пользователя.
-     * @return Объект UserDTO, представляющий обновленного пользователя без удаленных ролей.
-     */
-    UserDTO removeUserRoles(int id, UserRole... roles);
-
-    /**
-     * Удаляет роли у пользователя по его имени пользователя.
-     *
-     * @param username Имя пользователя.
-     * @param roles    Роли, которые необходимо удалить у пользователя.
-     * @return Объект UserDTO, представляющий обновленного пользователя без удаленных ролей.
-     */
-    UserDTO removeUserRoles(String username, UserRole... roles);
 }
