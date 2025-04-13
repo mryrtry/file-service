@@ -37,4 +37,5 @@ public interface FileMetaRepository extends JpaRepository<FileMeta, Integer> {
      * @return {@link List<FileMeta>}, список всех метаданных найденных файлов.
      */
     List<FileMeta> findAllByOwnerId(long ownerId);
+
 }

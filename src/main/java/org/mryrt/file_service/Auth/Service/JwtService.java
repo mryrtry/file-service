@@ -7,16 +7,14 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 @Slf4j
@@ -26,13 +24,16 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String SECRET;
 
+    @Value("${jwt.issuer}")
+    private String ISSUER;
+
     @Value("${jwt.expiration}")
     private int EXPIRATION;
 
     private String _createToken(String username) {
         log.debug("Creating token with for user: {}", username);
         return Jwts.builder()
-                .setClaims(new HashMap<>())
+                .setClaims(Map.of("iss", ISSUER))
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
@@ -50,19 +51,19 @@ public class JwtService {
         log.debug("Extracting all claims from token");
         return Jwts.parserBuilder()
                 .setSigningKey(_getSignKey())
+                .requireIssuer(ISSUER)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
 
-    private Date extractExpiration(String token) throws MalformedJwtException {
-        log.debug("Extracting expiration date from token");
-        return _extractClaim(token, Claims::getExpiration);
-    }
+    public boolean checkIssuedAtCorrect(String token) throws MalformedJwtException {
+        log.debug("Extracting issuedAt date from token");
+        Instant issuedAt = _extractClaim(token, Claims::getIssuedAt).toInstant();
+        Instant now = Instant.now();
 
-    public String extractUsername(String token) throws MalformedJwtException {
-        log.debug("Extracting username from token");
-        return _extractClaim(token, Claims::getSubject);
+        if (issuedAt.isAfter(now)) return false;
+        return Duration.between(issuedAt, now).toMillis() <= EXPIRATION + 1000L;
     }
 
     private Key _getSignKey() {
@@ -71,9 +72,9 @@ public class JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    private boolean _isTokenExpired(String token) {
-        log.debug("Checking if token is expired");
-        return extractExpiration(token).before(new Date());
+    public String extractUsername(String token) throws MalformedJwtException {
+        log.debug("Extracting username from token");
+        return _extractClaim(token, Claims::getSubject);
     }
 
     public String generateToken(String username) {
@@ -84,7 +85,7 @@ public class JwtService {
     public Boolean validateToken(String token, String username) throws MalformedJwtException {
         log.debug("Validating token for user: {}", username);
         final String tokenUsername = extractUsername(token);
-        return (tokenUsername.equals(username) && !_isTokenExpired(token));
+        return (tokenUsername.equals(username));
     }
 
 }

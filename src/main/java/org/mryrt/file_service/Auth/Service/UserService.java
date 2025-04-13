@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.HashSet;
 
+import static org.mryrt.file_service.Utility.Message.Auth.AuthErrorMessage.*;
+
 @Service
 @Slf4j
 public class UserService implements UserDetailsService {
@@ -38,20 +40,20 @@ public class UserService implements UserDetailsService {
     private User _getUserId(long id) {
         return userRepository
                 .findById(id)
-                .orElseThrow(() -> new InvalidCredentialsException("id", "id %d does not exist".formatted(id)));
+                .orElseThrow(() -> new InvalidCredentialsException(ID_NOT_FOUND, id));
     }
 
     private User _getUserUsername(String username) {
         return userRepository
                 .findByUsername(username)
-                .orElseThrow(() -> new InvalidCredentialsException("username", "username %s does not exist".formatted(username)));
+                .orElseThrow(() -> new InvalidCredentialsException(USERNAME_NOT_FOUND, username));
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return new CustomUserDetails(userRepository
                 .findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("username %s does not exist".formatted(username))));
+                .orElseThrow(() -> new UsernameNotFoundException(USERNAME_NOT_FOUND.getFormattedMessage(username))));
     }
 
     public UserDTO userSignUp(SignUpRequest signUpRequest) {
@@ -64,7 +66,7 @@ public class UserService implements UserDetailsService {
     public String userLogIn(LogInRequest logInRequest) {
         User user = _getUserUsername(logInRequest.getUsername());
         if (!passwordEncoder.matches(logInRequest.getPassword(), user.getPassword()))
-            throw new InvalidCredentialsException("password", "Wrong password");
+            throw new InvalidCredentialsException(WRONG_PASSWORD);
         return jwtService.generateToken(user.getUsername());
     }
 
@@ -72,7 +74,7 @@ public class UserService implements UserDetailsService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated())
             return new UserDTO(_getUserUsername(authentication.getName()));
-        throw new InvalidCredentialsException("username", "username %s does not exist".formatted(authentication.getName()));
+        throw new InvalidCredentialsException(USERNAME_NOT_FOUND, authentication.getName());
     }
 
 }

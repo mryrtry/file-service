@@ -28,11 +28,5 @@ public class UserController {
         String userToken  = userService.userLogIn(logInRequest);
         return ResponseEntity.ok(userToken);
     }
-
-    @GetMapping
-    public ResponseEntity userCurrent() {
-        UserDTO userDTO = userService.getAuthUser();
-        return ResponseEntity.ok().body(userDTO);
-    }
     
 }

@@ -1,11 +1,13 @@
 package org.mryrt.file_service.Auth.Model;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.Set;
 
 @Data
+@NoArgsConstructor
 public class UserDTO {
 
     public UserDTO(User user) {

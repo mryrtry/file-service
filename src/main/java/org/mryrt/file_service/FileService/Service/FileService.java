@@ -1,89 +1,80 @@
 package org.mryrt.file_service.FileService.Service;
 
-import org.mryrt.file_service.FileService.Exceptions.FileSizeExceededException;
-import org.mryrt.file_service.FileService.Exceptions.NotEnoughSpaceException;
+import org.mryrt.file_service.Auth.Model.UserDTO;
+import org.mryrt.file_service.Auth.Service.UserService;
+import org.mryrt.file_service.FileService.Annotation.FileSynchronization;
+import org.mryrt.file_service.FileService.Exceptions.FileProcessException;
 import org.mryrt.file_service.FileService.Model.FileMeta;
 import org.mryrt.file_service.FileService.Model.FileMetaDTO;
+import org.mryrt.file_service.FileService.Repository.FileMetaRepository;
 
-// Spring annotations
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
-// Spring web
-import org.springframework.http.ResponseEntity;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.multipart.MultipartFile;
 
-// Java IO
-import java.io.FileNotFoundException;
-
-// Java util
 import java.util.List;
-import java.util.function.Predicate;
 
-/**
- * Интерфейс для работы с файлами в файловом сервисе.
- * Предоставляет методы для загрузки, получения, удаления и управления файлами.
- */
+import static org.mryrt.file_service.Utility.Message.Files.FilesErrorMessage.*;
+
 @Service
-public interface FileService {
-    /**
-     * Загружает файл и сохраняет его метаданные.
-     *
-     * @param file файл, который необходимо загрузить.
-     * @return объект {@link FileMetaDTO}, содержащий метаданные загруженного файла.
-     */
-    FileMetaDTO uploadFile(MultipartFile file) throws FileSizeExceededException, NotEnoughSpaceException;
+@Slf4j
+public class FileService {
 
-    /**
-     * Получает метаданные файла по его уникальному идентификатору (UUID).
-     *
-     * @param uuid уникальный идентификатор файла.
-     * @return объект {@link FileMetaDTO}, содержащий метаданные файла.
-     */
-    ResponseEntity getFile(String uuid) throws FileNotFoundException;
+    @Value("${file.service.max-file-size}")
+    private int MAX_FILE_SIZE;
 
-    /**
-     * Получает метаданные всех файлов.
-     *
-     * @return список объектов {@link FileMetaDTO}, содержащих метаданные всех файлов.
-     */
-    List<FileMetaDTO> getAllFiles();
+    @Value("${file.service.max-folder-size}")
+    private long MAX_FOLDER_SIZE;
 
-    /**
-     * Получает метаданные всех файлов, удовлетворяющих заданному предикату.
-     *
-     * @param predicate предикат для фильтрации файлов.
-     * @return список объектов {@link FileMetaDTO}, содержащих метаданные файлов, удовлетворяющих предикату.
-     */
-    List<FileMetaDTO> getAllFiles(Predicate<FileMeta> predicate);
+    @Autowired
+    FileMetaRepository fileMetaRepository;
 
-    /**
-     * Удаляет файл по его уникальному идентификатору (UUID).
-     *
-     * @param uuid уникальный идентификатор файла.
-     * @return объект {@link FileMetaDTO}, содержащий метаданные удаленного файла.
-     */
-    FileMetaDTO deleteFile(String uuid) throws FileNotFoundException;
+    @Autowired
+    UserService userService;
 
-    /**
-     * Удаляет все файлы и возвращает метаданные удаленных файлов.
-     *
-     * @return список объектов {@link FileMetaDTO}, содержащих метаданные всех удаленных файлов.
-     */
-    List<FileMetaDTO> deleteAllFiles();
+    @Autowired
+    FilePathService filePathService;
 
-    /**
-     * Удаляет все файлы, удовлетворяющие заданному предикату.
-     *
-     * @param predicate предикат для фильтрации файлов, которые будут удалены.
-     * @return список объектов {@link FileMetaDTO}, содержащих метаданные удаленных файлов.
-     */
-    List<FileMetaDTO> deleteAllFiles(Predicate<FileMeta> predicate);
+    @Autowired
+    FileMetaService fileMetaService;
 
-    /**
-     * Обновляет метаданные файла по его уникальному идентификатору (UUID).
-     *
-     * @param uuid уникальный идентификатор файла.
-     * @return объект {@link FileMetaDTO}, содержащий обновленные метаданные файла.
-     */
-    FileMetaDTO touchFile(String uuid) throws FileNotFoundException;
+    @Autowired
+    private ResourceLoader resourceLoader;
+
+    private void assertFileNotEmpty(MultipartFile file) {
+        if (file.isEmpty())
+            throw new FileProcessException(FILE_IS_EMPTY);
+    }
+
+    private void assertFileSize(long fileSize, String username) {
+        if (fileSize > MAX_FILE_SIZE)
+            throw new FileProcessException(FILE_SIZE_TOO_LARGE);
+        if (fileSize + filePathService.getUserFolderSize(username) > MAX_FOLDER_SIZE)
+            throw new FileProcessException(NOT_ENOUGH_SPACE, username);
+    }
+
+    @FileSynchronization
+    public FileMetaDTO uploadFile(MultipartFile file) {
+        assertFileNotEmpty(file);
+        UserDTO user = userService.getAuthUser();
+        assertFileSize(file.getSize(), user.getUsername());
+        FileMeta fileMeta = fileMetaService.getFileMeta(user, file);
+        filePathService.saveUserFile(file, fileMeta, user.getUsername());
+        return new FileMetaDTO(fileMetaRepository.save(fileMeta));
+    }
+
+    @FileSynchronization
+    public List<FileMetaDTO> getFiles() {
+        return fileMetaRepository
+                .findAllByOwnerId(userService.getAuthUser().getId())
+                .stream()
+                .map(FileMetaDTO::new)
+                .toList();
+    }
+
 }
