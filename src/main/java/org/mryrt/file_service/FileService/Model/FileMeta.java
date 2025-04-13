@@ -32,9 +32,6 @@ public class FileMeta {
     private Long size;
 
     @Column(nullable = false)
-    private String mimetype;
-
-    @Column(nullable = false)
     private String extension;
 
     @NaturalId

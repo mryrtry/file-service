@@ -3,7 +3,6 @@ package org.mryrt.file_service.FileService.Service;
 import lombok.extern.slf4j.Slf4j;
 import org.mryrt.file_service.Auth.Model.UserDTO;
 import org.mryrt.file_service.FileService.Model.FileMeta;
-import org.mryrt.file_service.FileService.Parser.FileMetaParser;
 import org.mryrt.file_service.FileService.Repository.FileMetaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -20,15 +19,15 @@ public class FileMetaService {
     @Autowired
     FileMetaRepository fileMetaRepository;
 
-    @Autowired
-    FileMetaParser fileMetaParser;
-
     public FileMeta getFileMeta(UserDTO user, MultipartFile file) {
-        FileMeta fileMeta = fileMetaParser.parse(file);
-        fileMeta.setOwnerId(user.getId());
-        fileMeta.setName(getFilename(user.getId(), file.getOriginalFilename()));
-        fileMeta.setUuid(getUuid(fileMeta.getName()));
-        return fileMeta;
+        String filename = getFilename(user.getId(), file.getOriginalFilename());
+        return FileMeta.builder()
+                .ownerId(user.getId())
+                .name(filename)
+                .uuid(getUuid(filename))
+                .size(file.getSize())
+                .extension(getExtension(filename))
+                .build();
     }
 
     private String getFilename(long userId, String filename) {
@@ -41,9 +40,8 @@ public class FileMetaService {
                 .toList();
 
         int counter = 0;
-        while (filenameList.contains(fileBaseName)) {
+        while (filenameList.contains(fileBaseName))
             fileBaseName = "%s(%d)".formatted(receivedBaseName, ++counter);
-        }
 
         return fileBaseName + getExtension(filename);
     }

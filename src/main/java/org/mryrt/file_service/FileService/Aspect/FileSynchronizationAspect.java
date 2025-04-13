@@ -32,7 +32,7 @@ public class FileSynchronizationAspect {
     UserService userService;
 
     @Before("@annotation(ignoredFileSynchronization)")
-    public void beforeMethodExecution(JoinPoint ignoredJoinPoint, FileSynchronization ignoredFileSynchronization) {
+    public void setFileSynchronization(JoinPoint ignoredJoinPoint, FileSynchronization ignoredFileSynchronization) {
         UserDTO user = userService.getAuthUser();
         List<FileMeta> userFilesMeta = fileMetaRepository.findAllByOwnerId(user.getId());
         List<String> matchedFilenameList = filePathService.synchronizeUserFiles(getDiskFilenames(userFilesMeta), user.getUsername());

@@ -3,7 +3,10 @@ package org.mryrt.file_service.FileService.Service;
 import lombok.extern.slf4j.Slf4j;
 import org.mryrt.file_service.FileService.Exceptions.FileProcessException;
 import org.mryrt.file_service.FileService.Model.FileMeta;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,6 +30,9 @@ public class FilePathService {
     @Value("${file.service.upload-dir}")
     private String UPLOAD_DIR;
 
+    @Autowired
+    ResourceLoader resourceLoader;
+
     private Path getUserFolder(String username) {
         try {
             Path folder = Paths.get(UPLOAD_DIR).resolve(username).toAbsolutePath().normalize();
@@ -43,7 +49,7 @@ public class FilePathService {
 
     public void saveUserFile(MultipartFile file, FileMeta fileMeta, String username) {
         Path folder = getUserFolder(username);
-        Path destination = folder.resolve(fileMeta.getUuid() + fileMeta.getExtension());
+        Path destination = folder.resolve(fileMeta.getUuid() + fileMeta.getExtension()).normalize();
         try {
             Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException exception) {
@@ -111,6 +117,28 @@ public class FilePathService {
         }
 
         return existingFiles;
+    }
+
+    public Resource getUserFile(FileMeta fileMeta, String username) {
+        Path folder = getUserFolder(username);
+        Path destination = folder.resolve(fileMeta.getUuid() + fileMeta.getExtension()).normalize();
+        Resource resource = resourceLoader.getResource("file:%s".formatted(destination.toAbsolutePath().toString()));
+        if (!resource.exists())
+            throw new FileProcessException(USER_FILE_NOT_EXIST, username, fileMeta.getName());
+        if (!resource.isReadable())
+            throw new FileProcessException(USER_FILE_NOT_READABLE, username, fileMeta.getName());
+        return resource;
+    }
+
+    public void deleteUserFile(FileMeta fileMeta, String username) {
+        Path folder = getUserFolder(username);
+        Path destination = folder.resolve(fileMeta.getUuid() + fileMeta.getExtension()).normalize();
+        try {
+            if (!Files.deleteIfExists(destination))
+                throw new FileProcessException(USER_FILE_NOT_EXIST, username, fileMeta.getName());
+        } catch (IOException exception) {
+            throw new FileProcessException(USER_DIRECTORY_ACCESS_ERROR, username);
+        }
     }
 
 }

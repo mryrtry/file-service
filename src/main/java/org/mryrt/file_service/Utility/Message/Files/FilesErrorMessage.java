@@ -6,6 +6,8 @@ import lombok.Getter;
 public enum FilesErrorMessage {
 
     INVALID_FILE("file", "File is not readable"),
+    INVALID_FILE_UUID("uuid", "The uuid must be XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"),
+    UUID_NOT_EXIST("uuid", "Uuid '%s' wasn't found in user '%s' directory"),
     FILE_SIZE_TOO_LARGE("file", "File size to large"),
     FILE_INVALID_MIME_TYPE("file", "File mime type is undetectable"),
     FILE_IS_EMPTY("file", "File is empty"),
@@ -13,7 +15,9 @@ public enum FilesErrorMessage {
     NOT_ENOUGH_SPACE("file", "Not enough space in user '%s' folder"),
     NOT_ENOUGH_SPACE_ON_DISK("file", "Not enough space on disk"),
     USER_DIRECTORY_NOT_READABLE("directory", "User '%s' directory is not readable"),
-    USER_DIRECTORY_ACCESS_ERROR("directory", "User '%s' directory is not accessible");
+    USER_DIRECTORY_ACCESS_ERROR("directory", "User '%s' directory is not accessible"),
+    USER_FILE_NOT_READABLE("file", "User '%s' file '%s' is not readable"),
+    USER_FILE_NOT_EXIST("file", "User '%s' file wasn't found on disk'");
 
     private final String field;
 

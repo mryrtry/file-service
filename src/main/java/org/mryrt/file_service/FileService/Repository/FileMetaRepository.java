@@ -33,7 +33,7 @@ public interface FileMetaRepository extends JpaRepository<FileMeta, Integer> {
     /**
      * Ищет все метаданные файлов по идентификатору владельца.
      *
-     * @param ownerId - идентификатор владельца файла.
+     * @param ownerId идентификатор владельца файла.
      * @return {@link List<FileMeta>}, список всех метаданных найденных файлов.
      */
     List<FileMeta> findAllByOwnerId(long ownerId);
