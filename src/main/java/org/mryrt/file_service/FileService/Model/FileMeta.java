@@ -3,7 +3,6 @@ package org.mryrt.file_service.FileService.Model;
 import jakarta.persistence.*;
 
 import lombok.*;
-import org.hibernate.annotations.NaturalId;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -34,9 +33,11 @@ public class FileMeta {
     @Column(nullable = false)
     private String extension;
 
-    @NaturalId
     @Column(unique = true, nullable = false)
     private String uuid;
+
+    @Column(nullable = false)
+    private boolean suspiciousModification;
 
     @CreatedDate
     @Column(nullable = false, updatable = false, columnDefinition = "TIMESTAMP")
@@ -45,4 +46,9 @@ public class FileMeta {
     @LastModifiedDate
     @Column(nullable = false, columnDefinition = "TIMESTAMP")
     private Instant updateAt;
+
+    public String getDiskName() {
+        return uuid + extension;
+    }
+
 }

@@ -1,13 +1,13 @@
 package org.mryrt.file_service.FileService.Service;
 
-import org.mryrt.file_service.Auth.Model.UserDTO;
 import org.mryrt.file_service.Auth.Service.UserService;
-import org.mryrt.file_service.FileService.Annotation.FileSynchronization;
+import org.mryrt.file_service.FileService.Annotation.FileSync;
 import org.mryrt.file_service.FileService.Exceptions.FileProcessException;
 import org.mryrt.file_service.FileService.Model.FileMeta;
 import org.mryrt.file_service.FileService.Model.FileMetaDTO;
 import org.mryrt.file_service.FileService.Repository.FileMetaRepository;
 
+import org.mryrt.file_service.Utility.Annotation.TrackExecutionTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.unit.DataSize;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriUtils;
 
@@ -29,13 +30,14 @@ import static org.mryrt.file_service.Utility.Message.Files.FilesErrorMessage.*;
 
 @Service
 @Slf4j
+@TrackExecutionTime
 public class FileService {
 
     @Value("${file.service.max-file-size}")
-    private int MAX_FILE_SIZE;
+    private DataSize MAX_FILE_SIZE;
 
     @Value("${file.service.max-folder-size}")
-    private long MAX_FOLDER_SIZE;
+    private DataSize MAX_FOLDER_SIZE;
 
     @Autowired
     FileMetaRepository fileMetaRepository;
@@ -52,16 +54,22 @@ public class FileService {
     @Autowired
     private ResourceLoader resourceLoader;
 
+    private MultipartFile getFile(MultipartFile[] files) {
+        if (files.length != 1)
+            throw new FileProcessException(FILES_LIMIT_EXCEEDED);
+        return files[0];
+    }
+
     private void assertFileNotEmpty(MultipartFile file) {
         if (file.isEmpty())
             throw new FileProcessException(FILE_IS_EMPTY);
     }
 
-    private void assertFileSize(long fileSize, String username) {
-        if (fileSize > MAX_FILE_SIZE)
+    private void assertFileSize(long fileSize, long userId) {
+        if (fileSize > MAX_FILE_SIZE.toBytes())
             throw new FileProcessException(FILE_SIZE_TOO_LARGE);
-        if (fileSize + filePathService.getUserFolderSize(username) > MAX_FOLDER_SIZE)
-            throw new FileProcessException(NOT_ENOUGH_SPACE, username);
+        if (fileSize + filePathService.getUserFolderSize(userId) > MAX_FOLDER_SIZE.toBytes())
+            throw new FileProcessException(NOT_ENOUGH_SPACE, userId);
     }
 
     private void assertUuid(String uuid) {
@@ -69,9 +77,9 @@ public class FileService {
             throw new FileProcessException(INVALID_FILE_UUID);
     }
 
-    private FileMeta getFileMeta(String uuid, UserDTO user) {
-        return fileMetaRepository.findByUuidAndOwnerId(uuid, user.getId())
-                .orElseThrow(() -> new FileProcessException(UUID_NOT_EXIST, uuid, user.getUsername()));
+    private FileMeta getFileMeta(String uuid, long userId) {
+        return fileMetaRepository.findByUuidAndOwnerId(uuid, userId)
+                .orElseThrow(() -> new FileProcessException(UUID_NOT_EXIST, uuid, userId));
     }
 
     private HttpHeaders getHttpHeaders(String filename) {
@@ -82,39 +90,39 @@ public class FileService {
         return headers;
     }
 
-    @FileSynchronization
-    public FileMetaDTO uploadFile(MultipartFile file) {
+    public FileMetaDTO uploadFile(MultipartFile[] files) {
+        MultipartFile file = getFile(files);
         assertFileNotEmpty(file);
-        UserDTO user = userService.getAuthUser();
-        assertFileSize(file.getSize(), user.getUsername());
-        FileMeta fileMeta = fileMetaService.getFileMeta(user, file);
-        filePathService.saveUserFile(file, fileMeta, user.getUsername());
+        long userId = userService.getAuthUserId();
+        assertFileSize(file.getSize(), userId);
+        FileMeta fileMeta = fileMetaService.getFileMeta(userId, file);
+        filePathService.saveUserFile(file, fileMeta.getDiskName(), userId);
         return new FileMetaDTO(fileMetaRepository.save(fileMeta));
     }
 
-    @FileSynchronization
+    @FileSync
     public List<FileMetaDTO> getFiles() {
         return fileMetaRepository
-                .findAllByOwnerId(userService.getAuthUser().getId())
+                .findAllByOwnerId(userService.getAuthUserId())
                 .stream()
                 .map(FileMetaDTO::new)
                 .toList();
     }
 
-    @FileSynchronization
+    @FileSync
     public Pair<Resource, HttpHeaders> getFile(String uuid) {
         assertUuid(uuid);
-        UserDTO user = userService.getAuthUser();
-        FileMeta fileMeta = getFileMeta(uuid, user);
-        return Pair.of(filePathService.getUserFile(fileMeta, user.getUsername()), getHttpHeaders(fileMeta.getName()));
+        long userId = userService.getAuthUserId();
+        FileMeta fileMeta = getFileMeta(uuid, userId);
+        return Pair.of(filePathService.getUserFile(fileMeta.getDiskName(), userId), getHttpHeaders(fileMeta.getName()));
     }
 
-    @FileSynchronization
+    @FileSync
     public FileMetaDTO deleteFile(String uuid) {
         assertUuid(uuid);
-        UserDTO user = userService.getAuthUser();
-        FileMeta fileMeta = getFileMeta(uuid, user);
-        filePathService.deleteUserFile(fileMeta, user.getUsername());
+        long userId = userService.getAuthUserId();
+        FileMeta fileMeta = getFileMeta(uuid, userId);
+        filePathService.deleteUserFile(fileMeta.getDiskName(), userId);
         fileMetaRepository.delete(fileMeta);
         return new FileMetaDTO(fileMeta);
     }

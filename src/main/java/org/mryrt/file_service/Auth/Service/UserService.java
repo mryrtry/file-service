@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.mryrt.file_service.Auth.Exception.InvalidCredentialsException;
 import org.mryrt.file_service.Auth.Model.*;
 import org.mryrt.file_service.Auth.Repository.UserRepository;
+import org.mryrt.file_service.Utility.Annotation.TrackExecutionTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -12,14 +13,16 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.Set;
 
 import static org.mryrt.file_service.Utility.Message.Auth.AuthErrorMessage.*;
 
 @Service
 @Slf4j
+@Transactional(readOnly = true)
+@TrackExecutionTime
 public class UserService implements UserDetailsService {
 
     @Autowired
@@ -31,19 +34,13 @@ public class UserService implements UserDetailsService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    private void _processUser(User user, SignUpRequest signUpRequest) {
+    private void processUser(User user, SignUpRequest signUpRequest) {
         user.setUsername(signUpRequest.getUsername());
         user.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
-        user.setRoles(new HashSet<>(Collections.singletonList(UserRole.USER)));
+        user.setRoles(Set.of(UserRole.USER));
     }
 
-    private User _getUserId(long id) {
-        return userRepository
-                .findById(id)
-                .orElseThrow(() -> new InvalidCredentialsException(ID_NOT_FOUND, id));
-    }
-
-    private User _getUserUsername(String username) {
+    private User getUserByUsername(String username) {
         return userRepository
                 .findByUsername(username)
                 .orElseThrow(() -> new InvalidCredentialsException(USERNAME_NOT_FOUND, username));
@@ -56,25 +53,35 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException(USERNAME_NOT_FOUND.getFormattedMessage(username))));
     }
 
+    @Transactional
     public UserDTO userSignUp(SignUpRequest signUpRequest) {
         User user = new User();
-        _processUser(user, signUpRequest);
+        processUser(user, signUpRequest);
         User savedUser = userRepository.save(user);
         return new UserDTO(savedUser);
     }
 
     public String userLogIn(LogInRequest logInRequest) {
-        User user = _getUserUsername(logInRequest.getUsername());
+        User user = getUserByUsername(logInRequest.getUsername());
         if (!passwordEncoder.matches(logInRequest.getPassword(), user.getPassword()))
             throw new InvalidCredentialsException(WRONG_PASSWORD);
         return jwtService.generateToken(user.getUsername());
     }
 
-    public UserDTO getAuthUser() {
+    public long getAuthUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated())
-            return new UserDTO(_getUserUsername(authentication.getName()));
-        throw new InvalidCredentialsException(USERNAME_NOT_FOUND, authentication.getName());
+            return getUserByUsername(authentication.getName()).getId();
+        throw new InvalidCredentialsException(USER_NOT_AUTHENTICATED);
+    }
+
+    public boolean checkUserExists(String filename) {
+        try {
+            long userId = Long.parseLong(filename);
+            return userRepository.existsById(userId);
+        } catch (NumberFormatException exception) {
+            return false;
+        }
     }
 
 }

@@ -8,20 +8,20 @@ import org.mryrt.file_service.Utility.Message.Files.FilesErrorMessage;
 @Getter
 public class FileProcessException extends RuntimeException {
 
-    private final String field;
+    private final String exceptionField;
 
-    private final String exCause;
+    private final String exceptionCause;
 
     public FileProcessException(FilesErrorMessage filesErrorMessage, Object... args) {
-        this.field = filesErrorMessage.getField();
-        this.exCause = filesErrorMessage.getFormattedMessage(args);
-        log.warn("File exception: {}", exCause);
+        this.exceptionField = filesErrorMessage.getErrorField();
+        this.exceptionCause = filesErrorMessage.getFormattedMessage(args);
+        log.warn("File exception: {}", exceptionCause);
     }
 
     public FileProcessException(FilesErrorMessage filesErrorMessage, Exception exception, Object... args) {
-        this.field = filesErrorMessage.getField();
-        this.exCause = filesErrorMessage.getFormattedMessage(args);
-        log.warn("File exception: {} Message: {}", exception.getMessage(), exCause);
+        this.exceptionField = filesErrorMessage.getErrorField();
+        this.exceptionCause = filesErrorMessage.getFormattedMessage(args);
+        log.warn("File exception: {} Message: {}", exception.getMessage(), exceptionCause);
     }
 
 }

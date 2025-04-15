@@ -4,9 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
-import org.mryrt.file_service.Auth.Model.UserDTO;
 import org.mryrt.file_service.Auth.Service.UserService;
-import org.mryrt.file_service.FileService.Annotation.FileSynchronization;
+import org.mryrt.file_service.FileService.Annotation.FileSync;
 import org.mryrt.file_service.FileService.Model.FileMeta;
 import org.mryrt.file_service.FileService.Repository.FileMetaRepository;
 import org.mryrt.file_service.FileService.Service.FilePathService;
@@ -31,11 +30,12 @@ public class FileSynchronizationAspect {
     @Autowired
     UserService userService;
 
-    @Before("@annotation(ignoredFileSynchronization)")
-    public void setFileSynchronization(JoinPoint ignoredJoinPoint, FileSynchronization ignoredFileSynchronization) {
-        UserDTO user = userService.getAuthUser();
-        List<FileMeta> userFilesMeta = fileMetaRepository.findAllByOwnerId(user.getId());
-        List<String> matchedFilenameList = filePathService.synchronizeUserFiles(getDiskFilenames(userFilesMeta), user.getUsername());
+    @Before("@annotation(ignoredFileSync)")
+    public void setFileSynchronization(JoinPoint ignoredJoinPoint, FileSync ignoredFileSync) {
+        long userId = userService.getAuthUserId();
+        List<FileMeta> userFilesMeta = fileMetaRepository.findAllByOwnerId(userId);
+        List<String> userFilenames = userFilesMeta.stream().map(fileMeta -> fileMeta.getUuid() + fileMeta.getExtension()).toList();
+        List<String> matchedFilenameList = filePathService.syncingUserFiles(userFilenames, userId);
         userFilesMeta.forEach(fileMeta -> {
                     if (!matchedFilenameList.contains(fileMeta.getUuid() + fileMeta.getExtension())) {
                         fileMetaRepository.delete(fileMeta);
@@ -43,12 +43,6 @@ public class FileSynchronizationAspect {
                     }
                 }
         );
-    }
-
-    private List<String> getDiskFilenames(List<FileMeta> userFilesMeta) {
-        return userFilesMeta.stream()
-                .map(file -> file.getUuid() + file.getExtension())
-                .toList();
     }
 
 }

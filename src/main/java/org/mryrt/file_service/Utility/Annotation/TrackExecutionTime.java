@@ -1,12 +1,11 @@
-package org.mryrt.file_service.FileService.Annotation;
+package org.mryrt.file_service.Utility.Annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface FileSynchronization {
-    String value() default "";
+public @interface TrackExecutionTime {
 }

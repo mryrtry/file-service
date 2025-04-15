@@ -14,6 +14,7 @@ public class FileMetaDTO {
         this.ownerId = fileMeta.getOwnerId();
         this.size = fileMeta.getSize();
         this.uuid = fileMeta.getUuid();
+        this.suspiciousModification = fileMeta.isSuspiciousModification();
         this.createAt = fileMeta.getCreateAt();
         this.updateAt = fileMeta.getUpdateAt();
     }
@@ -27,6 +28,8 @@ public class FileMetaDTO {
     private long size;
 
     private String uuid;
+
+    private boolean suspiciousModification;
 
     private Instant createAt;
 

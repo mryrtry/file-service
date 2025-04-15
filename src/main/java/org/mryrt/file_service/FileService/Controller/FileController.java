@@ -20,8 +20,8 @@ public class FileController {
     FileService fileService;
 
     @PostMapping()
-    public ResponseEntity uploadFile(@RequestParam("file") MultipartFile file) {
-        FileMetaDTO fileMetaDTO = fileService.uploadFile(file);
+    public ResponseEntity uploadFile(@RequestParam("file") MultipartFile[] files) {
+        FileMetaDTO fileMetaDTO = fileService.uploadFile(files);
         return ResponseEntity.ok(fileMetaDTO);
     }
 

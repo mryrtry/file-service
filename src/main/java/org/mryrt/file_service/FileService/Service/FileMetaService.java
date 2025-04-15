@@ -1,9 +1,9 @@
 package org.mryrt.file_service.FileService.Service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.mryrt.file_service.Auth.Model.UserDTO;
 import org.mryrt.file_service.FileService.Model.FileMeta;
 import org.mryrt.file_service.FileService.Repository.FileMetaRepository;
+import org.mryrt.file_service.Utility.Annotation.TrackExecutionTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,15 +14,16 @@ import java.util.UUID;
 
 @Slf4j
 @Component
+@TrackExecutionTime
 public class FileMetaService {
 
     @Autowired
     FileMetaRepository fileMetaRepository;
 
-    public FileMeta getFileMeta(UserDTO user, MultipartFile file) {
-        String filename = getFilename(user.getId(), file.getOriginalFilename());
+    public FileMeta getFileMeta(long userId, MultipartFile file) {
+        String filename = getFilename(userId, file.getOriginalFilename());
         return FileMeta.builder()
-                .ownerId(user.getId())
+                .ownerId(userId)
                 .name(filename)
                 .uuid(getUuid(filename))
                 .size(file.getSize())
