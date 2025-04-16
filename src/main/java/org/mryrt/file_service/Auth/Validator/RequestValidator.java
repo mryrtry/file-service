@@ -44,7 +44,7 @@ public class RequestValidator {
 
     private static void _buildConstraintViolation(ConstraintValidatorContext context, AuthErrorMessage authErrorMessage, Object ... args) {
         context.buildConstraintViolationWithTemplate(authErrorMessage.getFormattedMessage(args))
-                .addPropertyNode(authErrorMessage.getField())
+                .addPropertyNode(authErrorMessage.getErrorField())
                 .addConstraintViolation();
     }
 

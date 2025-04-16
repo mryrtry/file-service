@@ -2,10 +2,11 @@ package org.mryrt.file_service.Utility.Message.Auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.mryrt.file_service.Utility.Message.ErrorMessage;
 
 @Getter
 @AllArgsConstructor
-public enum AuthErrorMessage {
+public enum AuthErrorMessage implements ErrorMessage {
 
     ID_NOT_FOUND("id", "The requested ID %d was not found. Please verify the provided value."),
 
@@ -35,7 +36,7 @@ public enum AuthErrorMessage {
     UNKNOWN_AUTH_ERROR("auth", "An unknown authentication error occurred."),
     USER_NOT_AUTHENTICATED("auth", "User authentication was not found. Please log in and try again.");
 
-    private final String field;
+    private final String errorField;
 
     private final String messageTemplate;
 

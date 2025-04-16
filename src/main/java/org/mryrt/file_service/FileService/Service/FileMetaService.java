@@ -25,7 +25,7 @@ public class FileMetaService {
         return FileMeta.builder()
                 .ownerId(userId)
                 .name(filename)
-                .uuid(getUuid(filename))
+                .uuid(getUuid(userId, filename))
                 .size(file.getSize())
                 .extension(getExtension(filename))
                 .build();
@@ -47,8 +47,8 @@ public class FileMetaService {
         return fileBaseName + getExtension(filename);
     }
 
-    private String getUuid(String filename) {
-        byte[] nameBytes = filename.getBytes(StandardCharsets.UTF_8);
+    private String getUuid(long userId, String filename) {
+        byte[] nameBytes = "%d-%s".formatted(userId, filename).getBytes(StandardCharsets.UTF_8);
         return UUID.nameUUIDFromBytes(nameBytes).toString();
     }
 
