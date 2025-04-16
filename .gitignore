@@ -1,0 +1,7 @@
+.gitignore
+
+/.idea/
+/target/
+/src/test/resources/
+
+/src/main/resources/application-dev.properties
