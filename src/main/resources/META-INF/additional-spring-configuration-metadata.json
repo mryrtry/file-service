@@ -1,0 +1,40 @@
+{
+  "properties": [
+    {
+      "name": "jwt.secret",
+      "type": "java.lang.String"
+    },
+    {
+      "name": "jwt.expiration",
+      "type": "java.time.Duration"
+    },
+    {
+      "name": "file.service.upload-dir",
+      "type": "java.lang.String"
+    },
+    {
+      "name": "file.service.max-file-size",
+      "type": "org.springframework.util.unit.DataSize"
+    },
+    {
+      "name": "file.service.max-folder-size",
+      "type": "org.springframework.util.unit.DataSize"
+    },
+    {
+      "name": "jwt.issuer",
+      "type": "java.lang.String"
+    },
+    {
+      "name": "monitoring.track-execution-time.enabled",
+      "type": "java.lang.Boolean"
+    },
+    {
+      "name": "tasks.folder-sync.frequency",
+      "type": "java.lang.Long"
+    },
+    {
+      "name": "tasks.folder-sync.enabled",
+      "type": "java.lang.Boolean",
+    }
+  ]
+}

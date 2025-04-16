@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
@@ -32,7 +33,7 @@ public class JwtService {
     private String ISSUER;
 
     @Value("${jwt.expiration}")
-    private int EXPIRATION;
+    private Duration EXPIRATION;
 
 
     private String createToken(String username) {
@@ -41,7 +42,7 @@ public class JwtService {
                 .setClaims(Map.of("iss", ISSUER))
                 .setSubject(username)
                 .setIssuedAt(Date.from(now))
-                .setExpiration(Date.from(now.plusMillis(EXPIRATION)))
+                .setExpiration(Date.from(now.plusMillis(EXPIRATION.toMillis())))
                 .signWith(getSignKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
