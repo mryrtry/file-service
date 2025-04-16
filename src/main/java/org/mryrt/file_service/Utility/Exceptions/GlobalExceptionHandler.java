@@ -12,7 +12,8 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mryrt.file_service.Utility.Message.Global.GlobalErrorMessage.*;
+import static org.mryrt.file_service.Utility.Message.Global.GlobalErrorMessage.INVALID_JSON;
+import static org.mryrt.file_service.Utility.Message.Global.GlobalErrorMessage.INVALID_REQUEST_TYPE;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -30,7 +31,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<HashMap<String, String>> handleHttpMessageNotReadableException(HttpMessageNotReadableException ignored) {
         HashMap<String, String> errors = new HashMap<>();
-        errors.put(INVALID_JSON.getField(), INVALID_JSON.getFormattedMessage());
+        errors.put(INVALID_JSON.getErrorField(), INVALID_JSON.getFormattedMessage());
         errors.put("timestamp", LocalDateTime.now().toString());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
@@ -39,9 +40,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MultipartException.class)
     public ResponseEntity<HashMap<String, String>> handleMultipartException(MultipartException ignored) {
         HashMap<String, String> errors = new HashMap<>();
-        errors.put(INVALID_REQUEST_TYPE.getField(), INVALID_REQUEST_TYPE.getFormattedMessage());
+        errors.put(INVALID_REQUEST_TYPE.getErrorField(), INVALID_REQUEST_TYPE.getFormattedMessage());
         errors.put("timestamp", LocalDateTime.now().toString());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
+
+    @ExceptionHandler(RateLimitedException.class)
+    public ResponseEntity<HashMap<String, String>> handleRateLimitedException(RateLimitedException ex) {
+        HashMap<String, String> errors = new HashMap<>();
+        errors.put(ex.getErrorField(), ex.getErrorCause());
+        errors.put("timestamp", LocalDateTime.now().toString());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(errors);
     }
 
 }

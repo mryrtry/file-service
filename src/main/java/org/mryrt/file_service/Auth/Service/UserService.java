@@ -1,5 +1,6 @@
 package org.mryrt.file_service.Auth.Service;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.mryrt.file_service.Auth.Exception.InvalidCredentialsException;
 import org.mryrt.file_service.Auth.Model.*;
@@ -54,14 +55,14 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public UserDTO userSignUp(SignUpRequest signUpRequest) {
+    public UserDTO userSignUp(@Valid SignUpRequest signUpRequest) {
         User user = new User();
         processUser(user, signUpRequest);
         User savedUser = userRepository.save(user);
         return new UserDTO(savedUser);
     }
 
-    public String userLogIn(LogInRequest logInRequest) {
+    public String userLogIn(@Valid LogInRequest logInRequest) {
         User user = getUserByUsername(logInRequest.getUsername());
         if (!passwordEncoder.matches(logInRequest.getPassword(), user.getPassword()))
             throw new InvalidCredentialsException(WRONG_PASSWORD);
