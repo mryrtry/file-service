@@ -1,51 +1,28 @@
 package org.mryrt.file_service.Auth.Validator;
 
-import jakarta.validation.ConstraintValidatorContext;
+import org.mryrt.file_service.Auth.Exception.InvalidCredentialsException;
 import org.mryrt.file_service.Auth.Repository.UserRepository;
-import org.mryrt.file_service.Utility.Message.Auth.AuthErrorMessage;
 
 import static org.mryrt.file_service.Utility.Message.Auth.AuthErrorMessage.*;
 
 public class RequestValidator {
 
-    public static boolean validateUsername(UserRepository userRepository, ConstraintValidatorContext context, String username, boolean invert) {
-        if (username == null || username.isBlank()) {
-            _buildConstraintViolation(context, USERNAME_REQUIRED);
-            return false;
-        } else if (username.length() < 2 || username.length() > 30) {
-            _buildConstraintViolation(context, USERNAME_LENGTH);
-            return false;
-        } else if (!username.matches("^[a-zA-Z0-9_\\s]+$") || !username.strip().equals(username)) {
-            _buildConstraintViolation(context, USERNAME_INVALID_CHARS);
-            return false;
-        }
-
-        if (userRepository.existsByUsername(username) != invert) {
-            _buildConstraintViolation(context, invert
-                    ? USERNAME_NOT_FOUND
-                    : USERNAME_ALREADY_EXISTS, username);
-            return false;
-        }
+    public static boolean validateUsername(UserRepository userRepository, String username, boolean invert) {
+        if (username == null || username.isBlank()) throw new InvalidCredentialsException(USERNAME_REQUIRED);
+        if (username.length() < 2 || username.length() > 30) throw new InvalidCredentialsException(USERNAME_LENGTH);
+        if (!username.matches("^[a-zA-Z0-9_\\s]+$") || !username.strip().equals(username))
+            throw new InvalidCredentialsException(USERNAME_INVALID_CHARS);
+        if (userRepository.existsByUsername(username) != invert)
+            throw new InvalidCredentialsException(invert ? USERNAME_NOT_FOUND : USERNAME_ALREADY_EXISTS, username);
 
         return true;
     }
 
-    public static boolean validatePassword(ConstraintValidatorContext context, String password) {
-        if (password == null || password.isBlank()) {
-            _buildConstraintViolation(context, PASSWORD_REQUIRED);
-            return false;
-        } else if (password.length() < 5) {
-            _buildConstraintViolation(context, PASSWORD_TOO_SHORT);
-            return false;
-        }
+    public static boolean validatePassword(String password) {
+        if (password == null || password.isBlank()) throw new InvalidCredentialsException(PASSWORD_REQUIRED);
+        if (password.length() < 5) throw new InvalidCredentialsException(PASSWORD_TOO_SHORT);
 
         return true;
-    }
-
-    private static void _buildConstraintViolation(ConstraintValidatorContext context, AuthErrorMessage authErrorMessage, Object ... args) {
-        context.buildConstraintViolationWithTemplate(authErrorMessage.getFormattedMessage(args))
-                .addPropertyNode(authErrorMessage.getErrorField())
-                .addConstraintViolation();
     }
 
 }

@@ -7,14 +7,12 @@ import org.mryrt.file_service.Utility.Message.ErrorMessage;
 @Getter
 public class InvalidCredentialsException extends RuntimeException {
 
-    private final String exceptionField;
-
-    private final String exceptionCause;
+    private final ErrorMessage errorMessage;
 
     public InvalidCredentialsException(ErrorMessage errorMessage, Object... args) {
-        this.exceptionField = errorMessage.getErrorField();
-        this.exceptionCause = errorMessage.getFormattedMessage(args);
-        AuthLogMessage.AUTH_EXCEPTION_OCCURRED.log(exceptionCause);
+        super(errorMessage.getFormattedMessage(args));
+        this.errorMessage = errorMessage;
+        AuthLogMessage.AUTH_EXCEPTION_OCCURRED.log(errorMessage.getFormattedMessage(args));
     }
 
 }

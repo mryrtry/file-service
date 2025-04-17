@@ -14,8 +14,8 @@ public class LogInRequestValidator implements ConstraintValidator<ValidLogInRequ
 
     @Override
     public boolean isValid(LogInRequest logInRequest, ConstraintValidatorContext context) {
-        return (RequestValidator.validateUsername(userRepository, context, logInRequest.getUsername(), true)
-                & RequestValidator.validatePassword(context, logInRequest.getPassword()));
+        return (RequestValidator.validateUsername(userRepository, logInRequest.getUsername(), true)
+                & RequestValidator.validatePassword(logInRequest.getPassword()));
     }
 
 }

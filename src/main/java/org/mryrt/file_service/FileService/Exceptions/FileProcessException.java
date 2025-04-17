@@ -9,20 +9,18 @@ import static org.mryrt.file_service.Utility.Message.Files.FilesLogMessage.FILE_
 @Getter
 public class FileProcessException extends RuntimeException {
 
-    private final String exceptionField;
-
-    private final String exceptionCause;
+    private final ErrorMessage errorMessage;
 
     public FileProcessException(ErrorMessage errorMessage, Object... args) {
-        this.exceptionField = errorMessage.getErrorField();
-        this.exceptionCause = errorMessage.getFormattedMessage(args);
-        FILE_EXCEPTION_OCCURRED.log(exceptionCause);
+        super(errorMessage.getFormattedMessage(args));
+        this.errorMessage = errorMessage;
+        FILE_EXCEPTION_OCCURRED.log(errorMessage.getFormattedMessage(args));
     }
 
     public FileProcessException(ErrorMessage errorMessage, Exception exception, Object... args) {
-        this.exceptionField = errorMessage.getErrorField();
-        this.exceptionCause = errorMessage.getFormattedMessage(args);
-        FILE_INTERNAL_EXCEPTION_OCCURRED.log(exception.getMessage(), exceptionCause);
+        super(errorMessage.getFormattedMessage(args));
+        this.errorMessage = errorMessage;
+        FILE_INTERNAL_EXCEPTION_OCCURRED.log(exception.getMessage(), errorMessage.getFormattedMessage(args));
     }
 
 }

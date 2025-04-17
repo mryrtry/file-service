@@ -14,8 +14,8 @@ public class SignUpRequestValidator implements ConstraintValidator<ValidSignUpRe
 
     @Override
     public boolean isValid(SignUpRequest signUpRequest, ConstraintValidatorContext context) {
-        return (RequestValidator.validateUsername(userRepository, context, signUpRequest.getUsername(), false)
-                & RequestValidator.validatePassword(context, signUpRequest.getPassword()));
+        return (RequestValidator.validateUsername(userRepository, signUpRequest.getUsername(), false)
+                & RequestValidator.validatePassword(signUpRequest.getPassword()));
     }
 
 }

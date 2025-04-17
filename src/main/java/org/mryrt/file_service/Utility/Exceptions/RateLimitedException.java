@@ -7,14 +7,12 @@ import org.mryrt.file_service.Utility.Message.Global.GlobalLogMessage;
 @Getter
 public class RateLimitedException extends RuntimeException {
 
-    private final String exceptionField;
-
-    private final String exceptionCause;
+    private final ErrorMessage errorMessage;
 
     public RateLimitedException(ErrorMessage errorMessage, Object... args) {
-        this.exceptionField = errorMessage.getErrorField();
-        this.exceptionCause = errorMessage.getFormattedMessage(args);
-        GlobalLogMessage.GLOBAL_ERROR_OCCURRED.log(exceptionCause);
+        super(errorMessage.getFormattedMessage(args));
+        this.errorMessage = errorMessage;
+        GlobalLogMessage.GLOBAL_ERROR_OCCURRED.log(errorMessage.getFormattedMessage(args));
     }
 
 }

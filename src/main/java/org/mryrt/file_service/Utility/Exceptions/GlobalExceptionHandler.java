@@ -33,24 +33,23 @@ public class GlobalExceptionHandler {
         HashMap<String, String> errors = new HashMap<>();
         errors.put(INVALID_JSON.getErrorField(), INVALID_JSON.getFormattedMessage());
         errors.put("timestamp", LocalDateTime.now().toString());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+        return ResponseEntity.status(INVALID_JSON.getHttpStatus()).body(errors);
     }
 
-    // todo: ну хз, будто надо не так это чекать
     @ExceptionHandler(MultipartException.class)
     public ResponseEntity<HashMap<String, String>> handleMultipartException(MultipartException ignored) {
         HashMap<String, String> errors = new HashMap<>();
         errors.put(INVALID_REQUEST_TYPE.getErrorField(), INVALID_REQUEST_TYPE.getFormattedMessage());
         errors.put("timestamp", LocalDateTime.now().toString());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+        return ResponseEntity.status(INVALID_REQUEST_TYPE.getHttpStatus()).body(errors);
     }
 
     @ExceptionHandler(RateLimitedException.class)
     public ResponseEntity<HashMap<String, String>> handleRateLimitedException(RateLimitedException ex) {
         HashMap<String, String> errors = new HashMap<>();
-        errors.put(ex.getExceptionField(), ex.getExceptionCause());
+        errors.put(ex.getErrorMessage().getErrorField(), ex.getMessage());
         errors.put("timestamp", LocalDateTime.now().toString());
-        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(errors);
+        return ResponseEntity.status(ex.getErrorMessage().getHttpStatus()).body(errors);
     }
 
 }
