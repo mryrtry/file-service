@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -43,6 +45,11 @@ public class AuthControllerTest {
 
     @Autowired
     private TestJwtService testJwtService;
+
+    @DynamicPropertySource
+    static void overrideProperties(DynamicPropertyRegistry registry) {
+        registry.add("rate-limiting.enable", () -> false);
+    }
 
     @BeforeEach
     void setUp() {
@@ -102,12 +109,12 @@ public class AuthControllerTest {
                 .andDo(print());
     }
 
-    private void performLogInAndExpectBadRequest(String username, String password, String field, AuthErrorMessage authErrorMessage, Object ... args) throws Exception {
+    private void performLogInAndExpectBadRequest(String username, String password, AuthErrorMessage authErrorMessage, Object... args) throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/log-in")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createLogInRequest(username, password))))
                 .andExpect(status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("$." + field).value(authErrorMessage.getFormattedMessage(args)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$." + authErrorMessage.getErrorField()).value(authErrorMessage.getFormattedMessage(args)))
                 .andDo(print());
     }
 
@@ -217,29 +224,29 @@ public class AuthControllerTest {
 
     @Test
     void logIn_NonExistentUser() throws Exception {
-        performLogInAndExpectBadRequest("nonexistentUser", "password123", "username", USERNAME_NOT_FOUND, "nonexistentUser");
+        performLogInAndExpectBadRequest("nonexistentUser", "password123", USERNAME_NOT_FOUND, "nonexistentUser");
     }
 
     @Test
     void logIn_InvalidUsername() throws Exception {
         createUser("testUser", "password123");
-        performLogInAndExpectBadRequest("#invalid", "password123", "username", USERNAME_INVALID_CHARS);
+        performLogInAndExpectBadRequest("#invalid", "password123", USERNAME_INVALID_CHARS);
     }
 
     @Test
     void logIn_WrongPassword() throws Exception {
         createUser("testUser", "password123");
-        performLogInAndExpectBadRequest("testUser", "wrongPassword", "password", WRONG_PASSWORD);
+        performLogInAndExpectBadRequest("testUser", "wrongPassword", WRONG_PASSWORD);
     }
 
     @Test
     void logIn_NoPassword() throws Exception {
-        performLogInAndExpectBadRequest("testUser", null, "password", PASSWORD_REQUIRED);
+        performLogInAndExpectBadRequest("testUser", null, PASSWORD_REQUIRED);
     }
 
     @Test
     void logIn_BlankPassword() throws Exception {
-        performLogInAndExpectBadRequest("testUser", "", "password", PASSWORD_REQUIRED);
+        performLogInAndExpectBadRequest("testUser", "", PASSWORD_REQUIRED);
     }
 
     @Test

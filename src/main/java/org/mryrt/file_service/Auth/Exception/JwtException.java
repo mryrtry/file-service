@@ -6,12 +6,15 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.MissingClaimException;
 import io.jsonwebtoken.security.InvalidKeyException;
 import io.jsonwebtoken.security.SignatureException;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.mryrt.file_service.Utility.Message.Auth.AuthErrorMessage;
 
 import static org.mryrt.file_service.Utility.Message.Auth.AuthErrorMessage.*;
 
+@AllArgsConstructor
 public enum JwtException {
+
     MALFORMED_JWT(INVALID_TOKEN, MalformedJwtException.class),
     EXPIRED_JWT(EXPIRED_TOKEN, ExpiredJwtException.class),
     INVALID_SIGNATURE(TOKEN_SIGNATURE_MISMATCH, SignatureException.class),
@@ -24,11 +27,6 @@ public enum JwtException {
 
     private final Class<? extends Exception> exceptionClass;
 
-    JwtException(AuthErrorMessage errorMessage, Class<? extends Exception> exceptionClass) {
-        this.errorMessage = errorMessage;
-        this.exceptionClass = exceptionClass;
-    }
-
     public static JwtValidationException fromException(Exception ex) {
         for (JwtException error : values()) {
             if (error.exceptionClass.isInstance(ex)) {
@@ -37,4 +35,5 @@ public enum JwtException {
         }
         return new JwtValidationException(UNKNOWN_AUTH_ERROR);
     }
+
 }

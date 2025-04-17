@@ -48,7 +48,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RateLimitedException.class)
     public ResponseEntity<HashMap<String, String>> handleRateLimitedException(RateLimitedException ex) {
         HashMap<String, String> errors = new HashMap<>();
-        errors.put(ex.getErrorField(), ex.getErrorCause());
+        errors.put(ex.getExceptionField(), ex.getExceptionCause());
         errors.put("timestamp", LocalDateTime.now().toString());
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(errors);
     }

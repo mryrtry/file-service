@@ -6,19 +6,13 @@ import org.mryrt.file_service.FileService.Exceptions.FileProcessException;
 import org.mryrt.file_service.FileService.Model.FileMeta;
 import org.mryrt.file_service.FileService.Model.FileMetaDTO;
 import org.mryrt.file_service.FileService.Repository.FileMetaRepository;
-
 import org.mryrt.file_service.Utility.Annotation.TrackExecutionTime;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-
-
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.unit.DataSize;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriUtils;
@@ -29,7 +23,6 @@ import java.util.List;
 import static org.mryrt.file_service.Utility.Message.Files.FilesErrorMessage.*;
 
 @Service
-@Slf4j
 @TrackExecutionTime
 public class FileService {
 
@@ -39,20 +32,24 @@ public class FileService {
     @Value("${file.service.max-folder-size}")
     private DataSize MAX_FOLDER_SIZE;
 
-    @Autowired
+    final
     FileMetaRepository fileMetaRepository;
 
-    @Autowired
+    final
     UserService userService;
 
-    @Autowired
+    final
     FilePathService filePathService;
 
-    @Autowired
+    final
     FileMetaService fileMetaService;
 
-    @Autowired
-    private ResourceLoader resourceLoader;
+    public FileService(FileMetaRepository fileMetaRepository, UserService userService, FilePathService filePathService, FileMetaService fileMetaService) {
+        this.fileMetaRepository = fileMetaRepository;
+        this.userService = userService;
+        this.filePathService = filePathService;
+        this.fileMetaService = fileMetaService;
+    }
 
     private MultipartFile getFile(MultipartFile[] files) {
         if (files.length != 1)

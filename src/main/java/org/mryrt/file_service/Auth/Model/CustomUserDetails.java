@@ -18,7 +18,7 @@ public class CustomUserDetails implements org.springframework.security.core.user
         this.username = user.getUsername();
         this.password = user.getPassword();
         ArrayList<GrantedAuthority> grantedAuthorities = new ArrayList<>();
-        user.getRoles().forEach(role -> grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + role.toString())));
+        user.getRoles().forEach(role -> grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_%s".formatted(role.toString()))));
         this.authorities = grantedAuthorities;
     }
 

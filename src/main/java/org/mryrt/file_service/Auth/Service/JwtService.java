@@ -6,8 +6,8 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import lombok.extern.slf4j.Slf4j;
 import org.mryrt.file_service.Utility.Annotation.TrackExecutionTime;
+import org.mryrt.file_service.Utility.Message.Auth.AuthLogMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -18,10 +18,6 @@ import java.util.Date;
 import java.util.Map;
 import java.util.function.Function;
 
-import static org.mryrt.file_service.Utility.Message.Auth.AuthLogMessage.GENERATING_TOKEN;
-
-
-@Slf4j
 @Service
 @TrackExecutionTime
 public class JwtService {
@@ -34,7 +30,6 @@ public class JwtService {
 
     @Value("${jwt.expiration}")
     private Duration EXPIRATION;
-
 
     private String createToken(String username) {
         Instant now = Instant.now();
@@ -76,7 +71,7 @@ public class JwtService {
     }
 
     public String generateToken(String username) {
-        log.debug(GENERATING_TOKEN.getFormattedMessage(username));
+        AuthLogMessage.GENERATING_TOKEN.log(username);
         return createToken(username);
     }
 

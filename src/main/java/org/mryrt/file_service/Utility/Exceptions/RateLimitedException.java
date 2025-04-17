@@ -1,21 +1,20 @@
 package org.mryrt.file_service.Utility.Exceptions;
 
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 import org.mryrt.file_service.Utility.Message.ErrorMessage;
+import org.mryrt.file_service.Utility.Message.Global.GlobalLogMessage;
 
 @Getter
-@Slf4j
 public class RateLimitedException extends RuntimeException {
 
-    private final String errorField;
+    private final String exceptionField;
 
-    private final String errorCause;
+    private final String exceptionCause;
 
     public RateLimitedException(ErrorMessage errorMessage, Object... args) {
-        this.errorField = errorMessage.getErrorField();
-        this.errorCause = errorMessage.getFormattedMessage(args);
-        log.info("Rate limited exception exception: {}", errorCause);
+        this.exceptionField = errorMessage.getErrorField();
+        this.exceptionCause = errorMessage.getFormattedMessage(args);
+        GlobalLogMessage.GLOBAL_ERROR_OCCURRED.log(exceptionCause);
     }
 
 }

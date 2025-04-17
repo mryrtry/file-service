@@ -1,10 +1,9 @@
 package org.mryrt.file_service.FileService.Service;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.AllArgsConstructor;
 import org.mryrt.file_service.FileService.Model.FileMeta;
 import org.mryrt.file_service.FileService.Repository.FileMetaRepository;
 import org.mryrt.file_service.Utility.Annotation.TrackExecutionTime;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -12,12 +11,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
-@Slf4j
 @Component
 @TrackExecutionTime
+@AllArgsConstructor
 public class FileMetaService {
 
-    @Autowired
+    final
     FileMetaRepository fileMetaRepository;
 
     public FileMeta getFileMeta(long userId, MultipartFile file) {

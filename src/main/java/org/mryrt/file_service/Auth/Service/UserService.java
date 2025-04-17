@@ -1,12 +1,10 @@
 package org.mryrt.file_service.Auth.Service;
 
-import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
+import lombok.AllArgsConstructor;
 import org.mryrt.file_service.Auth.Exception.InvalidCredentialsException;
 import org.mryrt.file_service.Auth.Model.*;
 import org.mryrt.file_service.Auth.Repository.UserRepository;
 import org.mryrt.file_service.Utility.Annotation.TrackExecutionTime;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,19 +19,16 @@ import java.util.Set;
 import static org.mryrt.file_service.Utility.Message.Auth.AuthErrorMessage.*;
 
 @Service
-@Slf4j
 @Transactional(readOnly = true)
 @TrackExecutionTime
+@AllArgsConstructor
 public class UserService implements UserDetailsService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private JwtService jwtService;
+    private final JwtService jwtService;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     private void processUser(User user, SignUpRequest signUpRequest) {
         user.setUsername(signUpRequest.getUsername());
@@ -55,14 +50,14 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public UserDTO userSignUp(@Valid SignUpRequest signUpRequest) {
+    public UserDTO userSignUp(SignUpRequest signUpRequest) {
         User user = new User();
         processUser(user, signUpRequest);
         User savedUser = userRepository.save(user);
         return new UserDTO(savedUser);
     }
 
-    public String userLogIn(@Valid LogInRequest logInRequest) {
+    public String userLogIn(LogInRequest logInRequest) {
         User user = getUserByUsername(logInRequest.getUsername());
         if (!passwordEncoder.matches(logInRequest.getPassword(), user.getPassword()))
             throw new InvalidCredentialsException(WRONG_PASSWORD);

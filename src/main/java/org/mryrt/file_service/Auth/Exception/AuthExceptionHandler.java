@@ -15,7 +15,7 @@ public class AuthExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<Map<String, String>> handleInvalidCredentials(InvalidCredentialsException ex) {
         Map<String, String> errors = new HashMap<>();
-        errors.put(ex.getField(), ex.getExCause());
+        errors.put(ex.getExceptionField(), ex.getExceptionCause());
         errors.put("timestamp", LocalDateTime.now().toString());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }

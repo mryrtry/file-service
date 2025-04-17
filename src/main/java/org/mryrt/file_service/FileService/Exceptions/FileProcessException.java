@@ -1,10 +1,11 @@
 package org.mryrt.file_service.FileService.Exceptions;
 
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 import org.mryrt.file_service.Utility.Message.ErrorMessage;
 
-@Slf4j
+import static org.mryrt.file_service.Utility.Message.Files.FilesLogMessage.FILE_EXCEPTION_OCCURRED;
+import static org.mryrt.file_service.Utility.Message.Files.FilesLogMessage.FILE_INTERNAL_EXCEPTION_OCCURRED;
+
 @Getter
 public class FileProcessException extends RuntimeException {
 
@@ -15,13 +16,13 @@ public class FileProcessException extends RuntimeException {
     public FileProcessException(ErrorMessage errorMessage, Object... args) {
         this.exceptionField = errorMessage.getErrorField();
         this.exceptionCause = errorMessage.getFormattedMessage(args);
-        log.warn("File exception: {}", exceptionCause);
+        FILE_EXCEPTION_OCCURRED.log(exceptionCause);
     }
 
     public FileProcessException(ErrorMessage errorMessage, Exception exception, Object... args) {
         this.exceptionField = errorMessage.getErrorField();
         this.exceptionCause = errorMessage.getFormattedMessage(args);
-        log.warn("File exception: {} Message: {}", exception.getMessage(), exceptionCause);
+        FILE_INTERNAL_EXCEPTION_OCCURRED.log(exception.getMessage(), exceptionCause);
     }
 
 }

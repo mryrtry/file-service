@@ -34,7 +34,11 @@
     },
     {
       "name": "tasks.folder-sync.enabled",
-      "type": "java.lang.Boolean",
+      "type": "java.lang.Boolean"
+    },
+    {
+      "name": "rate-limiting.enable",
+      "type": "java.lang.Boolean"
     }
   ]
 }

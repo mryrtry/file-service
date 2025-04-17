@@ -1,10 +1,9 @@
 package org.mryrt.file_service.FileService.Service;
 
-import lombok.extern.slf4j.Slf4j;
 import org.mryrt.file_service.Auth.Service.UserService;
 import org.mryrt.file_service.FileService.Exceptions.FileProcessException;
 import org.mryrt.file_service.Utility.Annotation.TrackExecutionTime;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mryrt.file_service.Utility.Message.Files.FilesErrorMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -23,7 +22,6 @@ import java.util.stream.Stream;
 import static org.mryrt.file_service.Utility.Message.Files.FilesErrorMessage.*;
 import static org.mryrt.file_service.Utility.Message.Files.FilesLogMessage.*;
 
-@Slf4j
 @Component
 @TrackExecutionTime
 public class FilePathService {
@@ -31,11 +29,14 @@ public class FilePathService {
     @Value("${file.service.upload-dir}")
     private String UPLOAD_DIR;
 
-    @Autowired
-    ResourceLoader resourceLoader;
+    private final ResourceLoader resourceLoader;
 
-    @Autowired
-    UserService userService;
+    private final UserService userService;
+
+    public FilePathService(ResourceLoader resourceLoader, UserService userService) {
+        this.resourceLoader = resourceLoader;
+        this.userService = userService;
+    }
 
     private Path getUserFolder(long userId) {
         try {
@@ -43,7 +44,7 @@ public class FilePathService {
             if (!Files.isDirectory(folder)) {
                 Files.createDirectories(folder);
             } else if (!Files.isReadable(folder)) {
-                throw new FileProcessException(USER_DIRECTORY_NOT_READABLE, userId);
+                throw new FileProcessException(FilesErrorMessage.USER_DIRECTORY_NOT_READABLE, userId);
             }
             return folder;
         } catch (IOException exception) {
@@ -73,13 +74,13 @@ public class FilePathService {
                         try {
                             folderSize.add(Files.size(file));
                         } catch (IOException exception) {
-                            log.warn(FILE_SKIPPED.getFormattedMessage(file.getFileName().toString(), exception.getMessage()));
+                            FILE_SKIPPED.log(file.getFileName(), exception.getMessage());
                         }
                     });
         } catch (IOException exception) {
             throw new FileProcessException(USER_DIRECTORY_ACCESS_ERROR, exception, userId);
         } finally {
-            Cleaner.create().register(this, () -> System.gc());
+            Cleaner.create().register(this, System::gc);
         }
 
         return folderSize.sum();
@@ -119,32 +120,32 @@ public class FilePathService {
                     .parallel()
                     .filter(path -> !path.equals(folder))
                     .forEach(file -> {
+                        String filename = file.getFileName().toString();
                         try {
-                            String filename = file.getFileName().toString();
                             if (!filenameList.contains(filename)) {
                                 Files.deleteIfExists(file);
-                                log.warn(NOT_USER_FILE.getFormattedMessage(filename));
+                                NOT_USER_FILE.log(filename, userId);
                                 return;
                             }
                             if (Files.isDirectory(file)) {
                                 Files.deleteIfExists(file);
-                                log.warn(FILE_IS_DIRECTORY.getFormattedMessage(filename));
+                                FILE_IS_DIRECTORY.log(filename, userId);
                                 return;
                             }
                             if (!Files.isReadable(file)) {
                                 Files.deleteIfExists(file);
-                                log.warn(USER_DIRECTORY_NOT_READABLE.getFormattedMessage(filename));
+                                FILE_NOT_READABLE.log(filename, userId);
                                 return;
                             }
                             existingFiles.add(filename);
                         } catch (IOException exception) {
-                            log.warn(FILE_SKIPPED.getFormattedMessage(file.getFileName().toString(), exception.getMessage()));
+                            FILE_SKIPPED.log(filename, exception.getMessage());
                         }
                     });
         } catch (IOException exception) {
             throw new FileProcessException(USER_DIRECTORY_ACCESS_ERROR, exception, userId);
         } finally {
-            Cleaner.create().register(this, () -> System.gc());
+            Cleaner.create().register(this, System::gc);
         }
 
         return existingFiles;
@@ -172,11 +173,11 @@ public class FilePathService {
                             String filename = directory.getFileName().toString();
                             if (!Files.isDirectory(directory)) {
                                 Files.deleteIfExists(directory);
-                                log.warn(FILE_REMOVED.getFormattedMessage(filename));
+                                BASE_DIRECTORY_INVALID_FILE_REMOVED.log(filename);
                             }
                             if (!userService.checkUserExists(filename)) {
                                 Files.deleteIfExists(directory);
-                                log.warn(FILE_REMOVED.getFormattedMessage(filename));
+                                NONEXISTENT_USER_DIRECTORY_REMOVED.log(filename);
                             }
                         } catch (IOException ignored) {
                         }

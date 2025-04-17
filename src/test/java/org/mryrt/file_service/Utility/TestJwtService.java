@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
+import java.time.Duration;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,7 +28,7 @@ public class TestJwtService {
     private String ISSUER;
 
     @Value("${jwt.expiration}")
-    private int EXPIRATION;
+    private Duration EXPIRATION;
 
     /**
      * Creates HMAC signing key from Base64-encoded secret.
@@ -47,18 +48,17 @@ public class TestJwtService {
      * @param username   Subject of the token (typically username)
      * @param issuedAt   Token issuance timestamp
      * @param expiration Token expiration timestamp
-     * @param algorithm  Signing algorithm to use
      * @param secret     Secret key for signing
      * @return Generated JWT token as compact string
      */
     private String createToken(String username, Date issuedAt, Date expiration,
-                               SignatureAlgorithm algorithm, String secret) {
+                               String secret) {
         return Jwts.builder()
                 .setClaims(Map.of("iss", ISSUER))
                 .setSubject(username)
                 .setIssuedAt(issuedAt)
                 .setExpiration(expiration)
-                .signWith(getSignKey(secret), algorithm)
+                .signWith(getSignKey(secret), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -68,19 +68,18 @@ public class TestJwtService {
      * @param username   Subject of the token
      * @param issuedAt   Token issuance timestamp
      * @param expiration Token expiration timestamp
-     * @param algorithm  Signing algorithm
      * @param secret     Secret key for signing
      * @param claims     Additional custom claims to include
      * @return Generated JWT token as compact string
      */
     private String createToken(String username, Date issuedAt, Date expiration,
-                               SignatureAlgorithm algorithm, String secret, Map claims) {
+                               String secret, Map<String, Object> claims) {
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(username)
                 .setIssuedAt(issuedAt)
                 .setExpiration(expiration)
-                .signWith(getSignKey(secret), algorithm)
+                .signWith(getSignKey(secret), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -92,8 +91,8 @@ public class TestJwtService {
      */
     public String createToken(String username) {
         return createToken(username, new Date(),
-                new Date(System.currentTimeMillis() + EXPIRATION),
-                SignatureAlgorithm.HS256, SECRET);
+                new Date(System.currentTimeMillis() + EXPIRATION.toMillis()),
+                SECRET);
     }
 
     /**
@@ -104,7 +103,7 @@ public class TestJwtService {
      */
     public String createExpiredToken(String username) {
         return createToken(username, new Date(), new Date(),
-                SignatureAlgorithm.HS256, SECRET);
+                SECRET);
     }
 
     /**
@@ -115,8 +114,7 @@ public class TestJwtService {
      */
     public String createWrongSecretToken(String username) {
         return createToken(username, new Date(),
-                new Date(System.currentTimeMillis() + EXPIRATION),
-                SignatureAlgorithm.HS256,
+                new Date(System.currentTimeMillis() + EXPIRATION.toMillis()),
                 "3e974a5d089c78300833eec921abddf5e73a893b5797cfe8bad817d017a88da6");
     }
 
@@ -129,8 +127,8 @@ public class TestJwtService {
     public String createTokenWithFutureIssuedAt(String username) {
         return createToken(username,
                 new Date(System.currentTimeMillis() + 3600 * 1000L),
-                new Date(System.currentTimeMillis() + EXPIRATION),
-                SignatureAlgorithm.HS256, SECRET);
+                new Date(System.currentTimeMillis() + EXPIRATION.toMillis()),
+                SECRET);
     }
 
     /**
@@ -141,8 +139,8 @@ public class TestJwtService {
      */
     public String createTokenWithIssuer(String username) {
         return createToken(username, new Date(),
-                new Date(System.currentTimeMillis() + EXPIRATION),
-                SignatureAlgorithm.HS256, SECRET,
+                new Date(System.currentTimeMillis() + EXPIRATION.toMillis()),
+                SECRET,
                 Map.of("iss", "#issuer"));
     }
 
@@ -157,7 +155,7 @@ public class TestJwtService {
                 .setClaims(new HashMap<>())
                 .setIssuer(ISSUER)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION.toMillis()))
                 .signWith(getSignKey(SECRET), SignatureAlgorithm.HS256)
                 .compact();
     }

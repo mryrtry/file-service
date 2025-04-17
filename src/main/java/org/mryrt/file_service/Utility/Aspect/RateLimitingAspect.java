@@ -3,7 +3,7 @@ package org.mryrt.file_service.Utility.Aspect;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.extern.slf4j.Slf4j;
+import lombok.AllArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -11,7 +11,7 @@ import org.mryrt.file_service.Utility.Annotation.RateLimited;
 import org.mryrt.file_service.Utility.Exceptions.RateLimitedException;
 import org.mryrt.file_service.Utility.Message.Global.GlobalErrorMessage;
 import org.mryrt.file_service.Utility.Service.RateLimiterService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -20,11 +20,11 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Aspect
 @Component
-@Slf4j
+@AllArgsConstructor
+@ConditionalOnProperty(name = "rate-limiting.enable", havingValue = "true")
 public class RateLimitingAspect {
 
-    @Autowired
-    private RateLimiterService rateLimiterService;
+    private final RateLimiterService rateLimiterService;
 
     @Around("@annotation(rateLimited)")
     public Object applyRateLimiting(ProceedingJoinPoint joinPoint, RateLimited rateLimited) throws Throwable {

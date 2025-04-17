@@ -35,7 +35,8 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mryrt.file_service.Utility.Message.Files.FilesErrorMessage.*;
 import static org.springframework.test.util.AssertionErrors.assertNotNull;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -57,6 +58,7 @@ public class FileControllerTest {
     @DynamicPropertySource
     static void overrideProperties(DynamicPropertyRegistry registry) {
         registry.add("file.service.upload-dir", () -> tempDir.toString());
+        registry.add("rate-limiting.enable", () -> false);
     }
 
     @BeforeAll
@@ -100,15 +102,15 @@ public class FileControllerTest {
         );
     }
 
-    private String extractField(String filename, String field) throws Exception {
+    private String extractUuid(String filename) throws Exception {
         List<Map<String, Object>> filesMeta = new ObjectMapper().readValue(getFilesMeta(), new TypeReference<>() {});
         Map<String, Object> fileMetas = filesMeta.stream()
                 .filter(fileMeta -> filename.equals(fileMeta.get("name")))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("File not found in response"));
 
-        String extractedField = (String) fileMetas.get(field);
-        assertNotNull(extractedField, "'%s' not found for file: ".formatted(field) + filename);
+        String extractedField = (String) fileMetas.get("uuid");
+        assertNotNull(extractedField, "'%s' not found for file: ".formatted("uuid") + filename);
 
         return extractedField;
     }
@@ -181,7 +183,7 @@ public class FileControllerTest {
         String filename = "Test50MB.pdf";
         MockMultipartFile file = getTestFile(filename);
         uploadFile(file);
-        String uuid = extractField(filename, "uuid");
+        String uuid = extractUuid(filename);
         assertFileEquals(getFile(uuid, filename), file);
     }
 
@@ -190,7 +192,7 @@ public class FileControllerTest {
         String filename = "ФайлTxt.txt";
         MockMultipartFile file = getTestFile(filename);
         uploadFile(file);
-        String uuid = extractField(filename, "uuid");
+        String uuid = extractUuid(filename);
         assertFileEquals(getFile(uuid, filename), file);
     }
 
@@ -246,7 +248,7 @@ public class FileControllerTest {
         String filename = "Test50MB.pdf";
         MockMultipartFile file = getTestFile(filename);
         uploadFile(file);
-        String uuid = extractField(filename, "uuid");
+        String uuid = extractUuid(filename);
         deleteFile(uuid, filename);
         getFileAndExpectBadRequest(uuid, UUID_NOT_EXIST, uuid, userId);
     }
@@ -256,7 +258,7 @@ public class FileControllerTest {
         String filename = "Test50MB.pdf";
         MockMultipartFile file = getTestFile(filename);
         uploadFile(file);
-        String uuid = extractField(filename, "uuid");
+        String uuid = extractUuid(filename);
         deleteFile(uuid, filename);
         deleteFileAndExpectBadRequest(uuid, UUID_NOT_EXIST, uuid, userId);
     }
