@@ -1,6 +1,5 @@
 package org.mryrt.file_service.FileService.Service;
 
-import lombok.extern.slf4j.Slf4j;
 import org.mryrt.file_service.Auth.Service.UserService;
 import org.mryrt.file_service.FileService.Exceptions.FileProcessException;
 import org.mryrt.file_service.FileService.Model.FileMeta;
@@ -25,7 +24,6 @@ import java.util.stream.Stream;
 import static org.mryrt.file_service.Utility.Message.Files.FilesErrorMessage.*;
 import static org.mryrt.file_service.Utility.Message.Files.FilesLogMessage.*;
 
-@Slf4j
 @Service
 @TrackExecutionTime
 public class FilePathService {
