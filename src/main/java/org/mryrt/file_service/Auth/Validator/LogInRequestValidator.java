@@ -4,18 +4,17 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import org.mryrt.file_service.Auth.Annotation.ValidLogInRequest;
 import org.mryrt.file_service.Auth.Model.LogInRequest;
-import org.mryrt.file_service.Auth.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class LogInRequestValidator implements ConstraintValidator<ValidLogInRequest, LogInRequest> {
 
     @Autowired
-    private UserRepository userRepository;
+    RequestValidator requestValidator;
 
     @Override
     public boolean isValid(LogInRequest logInRequest, ConstraintValidatorContext context) {
-        return (RequestValidator.validateUsername(userRepository, logInRequest.getUsername(), true)
-                & RequestValidator.validatePassword(logInRequest.getPassword()));
+        requestValidator.validate(logInRequest.getUsername(), logInRequest.getPassword(), true);
+        return true;
     }
 
 }

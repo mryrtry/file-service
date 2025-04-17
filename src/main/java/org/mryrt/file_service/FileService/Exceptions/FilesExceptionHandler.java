@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @ControllerAdvice
@@ -13,7 +13,7 @@ public class FilesExceptionHandler {
 
     @ExceptionHandler(FileProcessException.class)
     public ResponseEntity<Map<String, String>> handleInvalidCredentials(FileProcessException ex) {
-        Map<String, String> errors = new HashMap<>();
+        Map<String, String> errors = new LinkedHashMap<>();
         errors.put(ex.getErrorMessage().getErrorField(), ex.getMessage());
         errors.put("timestamp", LocalDateTime.now().toString());
         return ResponseEntity.status(ex.getErrorMessage().getHttpStatus()).body(errors);

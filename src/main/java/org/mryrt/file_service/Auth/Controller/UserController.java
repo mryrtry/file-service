@@ -1,6 +1,5 @@
 package org.mryrt.file_service.Auth.Controller;
 
-import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.mryrt.file_service.Auth.Model.LogInRequest;
 import org.mryrt.file_service.Auth.Model.SignUpRequest;
@@ -22,14 +21,14 @@ public class UserController {
 
     @RateLimited
     @PostMapping("/sign-up")
-    public ResponseEntity<UserDTO> userSignUp(@Valid @RequestBody SignUpRequest signUpRequest) {
+    public ResponseEntity<UserDTO> userSignUp(@RequestBody SignUpRequest signUpRequest) {
         UserDTO userDTO = userService.userSignUp(signUpRequest);
         return ResponseEntity.ok(userDTO);
     }
 
     @RateLimited
     @PostMapping("/log-in")
-    public ResponseEntity<String> userLogIn(@Valid @RequestBody LogInRequest logInRequest) {
+    public ResponseEntity<String> userLogIn(@RequestBody LogInRequest logInRequest) {
         String userToken  = userService.userLogIn(logInRequest);
         return ResponseEntity.ok(userToken);
     }

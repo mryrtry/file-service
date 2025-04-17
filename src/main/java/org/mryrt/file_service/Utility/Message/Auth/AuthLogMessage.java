@@ -31,7 +31,8 @@ public enum AuthLogMessage implements LogMessage {
 //    USER_ACCOUNT_LOCKED(LogLevel.WARN, "User account '%s' has been locked due to multiple failed login attempts."),
 //    SECURITY_CONTEXT_INITIALIZED(LogLevel.DEBUG, "Security context initialized for user '%s'."),
 
-    AUTH_EXCEPTION_OCCURRED(InternalLogLevel.DEBUG, "Auth service exception with cause: '%s'."),
+    AUTH_EXCEPTION_OCCURRED(InternalLogLevel.DEBUG, "Auth service exception occurred with cause: '%s'."),
+    VALIDATION_EXCEPTION_OCCURRED(InternalLogLevel.DEBUG, "Validation exception occurred with cause: '%s'."),
     JWT_EXCEPTION_OCCURRED(InternalLogLevel.DEBUG, "Jwt service exception occurred with cause '%s'.");
 
     private final InternalLogLevel logLevel;
