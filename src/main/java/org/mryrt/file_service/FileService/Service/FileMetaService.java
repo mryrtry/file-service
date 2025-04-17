@@ -4,14 +4,14 @@ import lombok.AllArgsConstructor;
 import org.mryrt.file_service.FileService.Model.FileMeta;
 import org.mryrt.file_service.FileService.Repository.FileMetaRepository;
 import org.mryrt.file_service.Utility.Annotation.TrackExecutionTime;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
-@Component
+@Service
 @TrackExecutionTime
 @AllArgsConstructor
 public class FileMetaService {

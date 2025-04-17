@@ -7,7 +7,7 @@ import org.mryrt.file_service.Utility.Message.Files.FilesErrorMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 import static org.mryrt.file_service.Utility.Message.Files.FilesErrorMessage.*;
 import static org.mryrt.file_service.Utility.Message.Files.FilesLogMessage.*;
 
-@Component
+@Service
 @TrackExecutionTime
 public class FilePathService {
 
