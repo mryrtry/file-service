@@ -143,19 +143,19 @@ public class FileControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.name").value(filename));
     }
 
-    private void deleteFileAndExpectBadRequest(String uuid, FilesErrorMessage filesErrorMessage, Object ... args) throws Exception {
+    private void deleteFileAndExpectError(String uuid, FilesErrorMessage filesErrorMessage, Object... args) throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.delete("/api/files/%s".formatted(uuid))
                         .header("Authorization", "Bearer %s".formatted(token)))
-                .andExpect(status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("$." + filesErrorMessage.getErrorField()).value(filesErrorMessage.getFormattedMessage(args)));
+                .andExpect(status().is(filesErrorMessage.getHttpStatus().value()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.%s".formatted(filesErrorMessage.getErrorField())).value(filesErrorMessage.getFormattedMessage(args)));
     }
 
-    private void uploadFileAndExpectBadRequest(MockMultipartFile file, FilesErrorMessage filesErrorMessage, Object ... args) throws Exception {
+    private void uploadFileAndExpectError(MockMultipartFile file, FilesErrorMessage filesErrorMessage, Object... args) throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.multipart("/api/files")
                         .file(file)
                         .header("Authorization", "Bearer %s".formatted(token)))
-                .andExpect(status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("$." + filesErrorMessage.getErrorField()).value(filesErrorMessage.getFormattedMessage(args)));
+                .andExpect(status().is(filesErrorMessage.getHttpStatus().value()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.%s".formatted(filesErrorMessage.getErrorField())).value(filesErrorMessage.getFormattedMessage(args)));
     }
 
     private byte[] getFile(String uuid, String filename) throws Exception {
@@ -163,7 +163,7 @@ public class FileControllerTest {
                         .header("Authorization", "Bearer %s".formatted(token)))
                 .andExpect(status().isOk())
                 .andExpect(header().exists("Content-Disposition"))
-                .andExpect(header().string("Content-Disposition", "attachment; filename=\"" + UriUtils.encode(filename, StandardCharsets.UTF_8) + "\""))
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"%s\"".formatted(UriUtils.encode(filename, StandardCharsets.UTF_8))))
                 .andExpect(header().exists("Content-Type"))
                 .andExpect(header().string("Content-Type", "application/octet-stream"))
                 .andReturn()
@@ -171,11 +171,11 @@ public class FileControllerTest {
                 .getContentAsByteArray();
     }
 
-    private void getFileAndExpectBadRequest(String uuid, FilesErrorMessage filesErrorMessage, Object ... args) throws Exception {
+    private void getFileAndExpectError(String uuid, FilesErrorMessage filesErrorMessage, Object... args) throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/files/%s".formatted(uuid))
                         .header("Authorization", "Bearer %s".formatted(token)))
-                .andExpect(status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("$." + filesErrorMessage.getErrorField()).value(filesErrorMessage.getFormattedMessage(args)));
+                .andExpect(status().is(filesErrorMessage.getHttpStatus().value()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.%s".formatted(filesErrorMessage.getErrorField())).value(filesErrorMessage.getFormattedMessage(args)));
     }
 
     @Test
@@ -204,14 +204,14 @@ public class FileControllerTest {
                 MediaType.TEXT_PLAIN_VALUE,
                 new byte[0]
         );
-        uploadFileAndExpectBadRequest(emptyFile, FILE_IS_EMPTY);
+        uploadFileAndExpectError(emptyFile, FILE_IS_EMPTY);
     }
 
     @Test
     void uploadFile_LargeFile_ReturnBadRequest() throws Exception {
         String filename = "Test100MB.pdf";
         MockMultipartFile file = getTestFile(filename);
-        uploadFileAndExpectBadRequest(file, FILE_SIZE_TOO_LARGE);
+        uploadFileAndExpectError(file, FILE_SIZE_TOO_LARGE);
     }
 
     @Test
@@ -219,7 +219,7 @@ public class FileControllerTest {
         String filename = "Test50MB.pdf";
         MockMultipartFile file = getTestFile(filename);
         for (int i = 0; i < 20; i++) uploadFile(file);
-        uploadFileAndExpectBadRequest(file, NOT_ENOUGH_SPACE, userId);
+        uploadFileAndExpectError(file, NOT_ENOUGH_SPACE, userId);
     }
 
     @Test
@@ -234,13 +234,13 @@ public class FileControllerTest {
                         .file(file1)
                         .file(file2)
                         .header("Authorization", "Bearer %s".formatted(token)))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().is(FILES_LIMIT_EXCEEDED.getHttpStatus().value()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$." + "file").value(FILES_LIMIT_EXCEEDED.getFormattedMessage()));
     }
 
     @Test
     void getFile_FileNotFound_ReturnsBadRequest() throws Exception {
-        getFileAndExpectBadRequest("invalid-uuid", INVALID_FILE_UUID);
+        getFileAndExpectError("invalid-uuid", INVALID_FILE_UUID);
     }
 
     @Test
@@ -250,7 +250,7 @@ public class FileControllerTest {
         uploadFile(file);
         String uuid = extractUuid(filename);
         deleteFile(uuid, filename);
-        getFileAndExpectBadRequest(uuid, UUID_NOT_EXIST, uuid, userId);
+        getFileAndExpectError(uuid, UUID_NOT_EXIST, uuid, userId);
     }
 
     @Test
@@ -260,18 +260,18 @@ public class FileControllerTest {
         uploadFile(file);
         String uuid = extractUuid(filename);
         deleteFile(uuid, filename);
-        deleteFileAndExpectBadRequest(uuid, UUID_NOT_EXIST, uuid, userId);
+        deleteFileAndExpectError(uuid, UUID_NOT_EXIST, uuid, userId);
     }
 
     @Test
     void deleteFile_NonExistentUuid_ReturnsBadRequest() throws Exception {
         String uuid = "128b7b5a-e573-317b-8c0b-371a40e4a21e";
-        deleteFileAndExpectBadRequest(uuid, UUID_NOT_EXIST, uuid, userId);
+        deleteFileAndExpectError(uuid, UUID_NOT_EXIST, uuid, userId);
     }
 
     @Test
     void deleteFile_InvalidUuid_ReturnsBadRequest() throws Exception {
-        deleteFileAndExpectBadRequest("invalid-uuid", INVALID_FILE_UUID);
+        deleteFileAndExpectError("invalid-uuid", INVALID_FILE_UUID);
     }
 
     @Test

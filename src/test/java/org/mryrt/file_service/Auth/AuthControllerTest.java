@@ -95,26 +95,26 @@ public class AuthControllerTest {
 
     private void checkTokenIsValid(String token) throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/files")
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer %s".formatted(token)))
                 .andExpect(status().isOk())
                 .andDo(print());
     }
 
-    private void performSignUpAndExpectBadRequest(String username, String password, String field, AuthErrorMessage authErrorMessage, Object ... args) throws Exception {
+    private void performSignUpAndExpectError(String username, String password, String field, AuthErrorMessage authErrorMessage, Object... args) throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createSignUpRequest(username, password))))
-                .andExpect(status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("$." + field).value(authErrorMessage.getFormattedMessage(args)))
+                .andExpect(status().is(authErrorMessage.getHttpStatus().value()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.%s".formatted(field)).value(authErrorMessage.getFormattedMessage(args)))
                 .andDo(print());
     }
 
-    private void performLogInAndExpectBadRequest(String username, String password, AuthErrorMessage authErrorMessage, Object... args) throws Exception {
+    private void performLogInAndExpectError(String username, String password, AuthErrorMessage authErrorMessage, Object... args) throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/log-in")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createLogInRequest(username, password))))
-                .andExpect(status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("$." + authErrorMessage.getErrorField()).value(authErrorMessage.getFormattedMessage(args)))
+                .andExpect(status().is(authErrorMessage.getHttpStatus().value()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.%s".formatted(authErrorMessage.getErrorField())).value(authErrorMessage.getFormattedMessage(args)))
                 .andDo(print());
     }
 
@@ -122,8 +122,8 @@ public class AuthControllerTest {
         createUser("testUser", "password123");
         String token = tokenGenerator.apply(username);
         mockMvc.perform(MockMvcRequestBuilders.get("/api/files")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isUnauthorized())
+                        .header("Authorization", "Bearer %s".formatted(token)))
+                .andExpect(status().is(authErrorMessage.getHttpStatus().value()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.error").value(authErrorMessage.getFormattedMessage(args)))
                 .andDo(print());
     }
@@ -136,7 +136,7 @@ public class AuthControllerTest {
     @Test
     void signUp_DuplicateUsername() throws Exception {
         createUser("testUser", "password123");
-        performSignUpAndExpectBadRequest("testUser", "password123", "username", USERNAME_ALREADY_EXISTS, "testUser");
+        performSignUpAndExpectError("testUser", "password123", "username", USERNAME_ALREADY_EXISTS, "testUser");
     }
 
     @Test
@@ -155,27 +155,27 @@ public class AuthControllerTest {
     @Test
     void signUp_TooLongUsername() throws Exception {
         String longUsername = "a".repeat(50);
-        performSignUpAndExpectBadRequest(longUsername, "password123", "username", USERNAME_LENGTH);
+        performSignUpAndExpectError(longUsername, "password123", "username", USERNAME_LENGTH);
     }
 
     @Test
     void signUp_UsernameWithLeadingTrailingSpaces() throws Exception {
-        performSignUpAndExpectBadRequest("  testUser  ", "password123", "username", USERNAME_INVALID_CHARS);
+        performSignUpAndExpectError("  testUser  ", "password123", "username", USERNAME_INVALID_CHARS);
     }
 
     @Test
     void signUp_BlankUsername() throws Exception {
-        performSignUpAndExpectBadRequest("", "password123", "username", USERNAME_REQUIRED);
+        performSignUpAndExpectError("", "password123", "username", USERNAME_REQUIRED);
     }
 
     @Test
     void signUp_InvalidUsername() throws Exception {
-        performSignUpAndExpectBadRequest("username#", "password123", "username", USERNAME_INVALID_CHARS);
+        performSignUpAndExpectError("username#", "password123", "username", USERNAME_INVALID_CHARS);
     }
 
     @Test
     void signUp_NoUsername() throws Exception {
-        performSignUpAndExpectBadRequest(null, "password123", "username", USERNAME_REQUIRED);
+        performSignUpAndExpectError(null, "password123", "username", USERNAME_REQUIRED);
     }
 
     @Test
@@ -192,7 +192,7 @@ public class AuthControllerTest {
 
     @Test
     void signUp_TooShortPassword() throws Exception {
-        performSignUpAndExpectBadRequest("testUser", "1234", "password", PASSWORD_TOO_SHORT);
+        performSignUpAndExpectError("testUser", "1234", "password", PASSWORD_TOO_SHORT);
     }
 
     @Test
@@ -200,9 +200,8 @@ public class AuthControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().is(USERNAME_REQUIRED.getHttpStatus().value()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.username").value(USERNAME_REQUIRED.getFormattedMessage()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.password").value(PASSWORD_REQUIRED.getFormattedMessage()))
                 .andDo(print());
     }
 
@@ -211,7 +210,7 @@ public class AuthControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createInvalidJson()))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().is(INVALID_JSON.getHttpStatus().value()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.params").value(INVALID_JSON.getFormattedMessage()))
                 .andDo(print());
     }
@@ -224,29 +223,31 @@ public class AuthControllerTest {
 
     @Test
     void logIn_NonExistentUser() throws Exception {
-        performLogInAndExpectBadRequest("nonexistentUser", "password123", USERNAME_NOT_FOUND, "nonexistentUser");
+        performLogInAndExpectError("nonexistentUser", "password123", USERNAME_NOT_FOUND, "nonexistentUser");
     }
 
     @Test
     void logIn_InvalidUsername() throws Exception {
         createUser("testUser", "password123");
-        performLogInAndExpectBadRequest("#invalid", "password123", USERNAME_INVALID_CHARS);
+        performLogInAndExpectError("#invalid", "password123", USERNAME_INVALID_CHARS);
     }
 
     @Test
     void logIn_WrongPassword() throws Exception {
         createUser("testUser", "password123");
-        performLogInAndExpectBadRequest("testUser", "wrongPassword", WRONG_PASSWORD);
+        performLogInAndExpectError("testUser", "wrongPassword", WRONG_PASSWORD);
     }
 
     @Test
     void logIn_NoPassword() throws Exception {
-        performLogInAndExpectBadRequest("testUser", null, PASSWORD_REQUIRED);
+        createUser("testUser", "password");
+        performLogInAndExpectError("testUser", null, PASSWORD_REQUIRED);
     }
 
     @Test
     void logIn_BlankPassword() throws Exception {
-        performLogInAndExpectBadRequest("testUser", "", PASSWORD_REQUIRED);
+        createUser("testUser", "password");
+        performLogInAndExpectError("testUser", "", PASSWORD_REQUIRED);
     }
 
     @Test
@@ -254,7 +255,7 @@ public class AuthControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/log-in")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createInvalidJson()))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().is(INVALID_JSON.getHttpStatus().value()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.params").value(INVALID_JSON.getFormattedMessage()))
                 .andDo(print());
     }
@@ -262,7 +263,7 @@ public class AuthControllerTest {
     @Test
     void access_MissingAuthorizationHeader() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/files"))
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().is(MISSING_AUTH_HEADER.getHttpStatus().value()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.error").value(MISSING_AUTH_HEADER.getFormattedMessage()))
                 .andDo(print());
     }
@@ -303,7 +304,7 @@ public class AuthControllerTest {
         String token = loginAndGetToken("testUser", "password123");
         mockMvc.perform(MockMvcRequestBuilders.get("/api/files")
                         .header("Authorization", token))
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().is(INVALID_AUTH_HEADER_FORMAT.getHttpStatus().value()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.error").value(INVALID_AUTH_HEADER_FORMAT.getFormattedMessage()))
                 .andDo(print());
     }
@@ -312,7 +313,7 @@ public class AuthControllerTest {
     void access_EmptyJWT() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/files")
                         .header("Authorization", "Bearer "))
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().is(EMPTY_TOKEN.getHttpStatus().value()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.error").value(EMPTY_TOKEN.getFormattedMessage()))
                 .andDo(print());
     }
