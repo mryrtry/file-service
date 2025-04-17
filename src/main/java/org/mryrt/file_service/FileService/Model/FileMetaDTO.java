@@ -22,6 +22,8 @@ public class FileMetaDTO {
     private String uuid;
     @JsonInclude(JsonInclude.Include.NON_DEFAULT)
     private boolean suspiciousModified;
+    private Instant createAt;
+    private Instant updateAt;
 
     public FileMetaDTO(FileMeta fileMeta) {
         this.id = fileMeta.getId();
@@ -34,9 +36,5 @@ public class FileMetaDTO {
         this.createAt = fileMeta.getCreateAt();
         this.updateAt = fileMeta.getUpdateAt();
     }
-
-    private Instant createAt;
-
-    private Instant updateAt;
 
 }

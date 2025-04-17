@@ -42,18 +42,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 public class FileControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private FileMetaRepository fileMetaRepository;
-
     @TempDir
     static Path tempDir;
-
     private static String token;
-
     private static long userId;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private FileMetaRepository fileMetaRepository;
 
     @DynamicPropertySource
     static void overrideProperties(DynamicPropertyRegistry registry) {
@@ -68,15 +64,10 @@ public class FileControllerTest {
         token = getTestUserToken(mockMvc, objectMapper);
     }
 
-    @BeforeEach
-    void setUp() {
-        fileMetaRepository.deleteAll();
-    }
-
     private static String getTestUserToken(MockMvc mockMvc, ObjectMapper objectMapper) throws Exception {
         String user = mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/sign-up")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new SignUpRequest("testUser", "password"))))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new SignUpRequest("testUser", "password"))))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
@@ -91,6 +82,11 @@ public class FileControllerTest {
                 .getContentAsString();
     }
 
+    @BeforeEach
+    void setUp() {
+        fileMetaRepository.deleteAll();
+    }
+
     private MockMultipartFile getTestFile(String fileName) throws Exception {
         ClassLoader classLoader = FileControllerTest.class.getClassLoader();
         InputStream inputStream = classLoader.getResourceAsStream(fileName);
@@ -103,7 +99,8 @@ public class FileControllerTest {
     }
 
     private String extractUuid(String filename) throws Exception {
-        List<Map<String, Object>> filesMeta = new ObjectMapper().readValue(getFilesMeta(), new TypeReference<>() {});
+        List<Map<String, Object>> filesMeta = new ObjectMapper().readValue(getFilesMeta(), new TypeReference<>() {
+        });
         Map<String, Object> fileMetas = filesMeta.stream()
                 .filter(fileMeta -> filename.equals(fileMeta.get("name")))
                 .findFirst()

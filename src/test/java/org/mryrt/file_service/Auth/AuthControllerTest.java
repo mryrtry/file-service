@@ -128,7 +128,7 @@ public class AuthControllerTest {
                 .andDo(print());
     }
 
-    private void performAccessTest(String username, Function<String, String> tokenGenerator, AuthErrorMessage authErrorMessage, Object ... args) throws Exception {
+    private void performAccessTest(String username, Function<String, String> tokenGenerator, AuthErrorMessage authErrorMessage, Object... args) throws Exception {
         createUser("testUser", "password123");
         String token = tokenGenerator.apply(username);
         mockMvc.perform(MockMvcRequestBuilders.get("/api/files")

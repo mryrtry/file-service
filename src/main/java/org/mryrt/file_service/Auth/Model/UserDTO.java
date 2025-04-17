@@ -10,19 +10,16 @@ import java.util.Set;
 @NoArgsConstructor
 public class UserDTO {
 
+    private long id;
+    private String username;
+    private Set<UserRole> roles;
+    private LocalDateTime createdAt;
+
     public UserDTO(User user) {
         this.id = user.getId();
         this.username = user.getUsername();
         this.roles = user.getRoles();
         this.createdAt = user.getCreatedAt();
     }
-
-    private long id;
-
-    private String username;
-
-    private Set<UserRole> roles;
-
-    private LocalDateTime createdAt;
 
 }

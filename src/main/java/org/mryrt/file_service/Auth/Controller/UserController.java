@@ -29,8 +29,8 @@ public class UserController {
     @RateLimited
     @PostMapping("/log-in")
     public ResponseEntity<String> userLogIn(@RequestBody LogInRequest logInRequest) {
-        String userToken  = userService.userLogIn(logInRequest);
+        String userToken = userService.userLogIn(logInRequest);
         return ResponseEntity.ok(userToken);
     }
-    
+
 }

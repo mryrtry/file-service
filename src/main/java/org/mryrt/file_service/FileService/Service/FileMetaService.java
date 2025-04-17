@@ -19,6 +19,16 @@ public class FileMetaService {
     final
     FileMetaRepository fileMetaRepository;
 
+    private static String getBaseName(String filename) {
+        int dotIndex = filename.lastIndexOf('.');
+        return dotIndex > 0 ? filename.substring(0, dotIndex) : filename;
+    }
+
+    private static String getExtension(String filename) {
+        int dotIndex = filename.lastIndexOf('.');
+        return dotIndex > 0 ? filename.substring(dotIndex) : "";
+    }
+
     public FileMeta getFileMeta(long userId, MultipartFile file) {
         String filename = getFilename(userId, file.getOriginalFilename());
         return FileMeta.builder()
@@ -49,16 +59,6 @@ public class FileMetaService {
     private String getUuid(long userId, String filename) {
         byte[] nameBytes = "%d-%s".formatted(userId, filename).getBytes(StandardCharsets.UTF_8);
         return UUID.nameUUIDFromBytes(nameBytes).toString();
-    }
-
-    private static String getBaseName(String filename) {
-        int dotIndex = filename.lastIndexOf('.');
-        return dotIndex > 0 ? filename.substring(0, dotIndex) : filename;
-    }
-
-    private static String getExtension(String filename) {
-        int dotIndex = filename.lastIndexOf('.');
-        return dotIndex > 0 ? filename.substring(dotIndex) : "";
     }
 
 }

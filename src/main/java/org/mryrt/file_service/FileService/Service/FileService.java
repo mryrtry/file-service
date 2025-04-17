@@ -26,23 +26,18 @@ import static org.mryrt.file_service.Utility.Message.Files.FilesErrorMessage.*;
 @TrackExecutionTime
 public class FileService {
 
-    @Value("${file.service.max-file-size}")
-    private DataSize MAX_FILE_SIZE;
-
-    @Value("${file.service.max-folder-size}")
-    private DataSize MAX_FOLDER_SIZE;
-
     final
     FileMetaRepository fileMetaRepository;
-
     final
     UserService userService;
-
     final
     FilePathService filePathService;
-
     final
     FileMetaService fileMetaService;
+    @Value("${file.service.max-file-size}")
+    private DataSize MAX_FILE_SIZE;
+    @Value("${file.service.max-folder-size}")
+    private DataSize MAX_FOLDER_SIZE;
 
     public FileService(FileMetaRepository fileMetaRepository, UserService userService, FilePathService filePathService, FileMetaService fileMetaService) {
         this.fileMetaRepository = fileMetaRepository;
