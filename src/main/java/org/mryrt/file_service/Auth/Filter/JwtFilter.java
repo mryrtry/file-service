@@ -87,14 +87,15 @@ public class JwtFilter extends OncePerRequestFilter {
             _setAuthorization(request, username);
             filterChain.doFilter(request, response);
         } catch (Exception exception) {
-            if (exception instanceof JwtValidationException) handleException(response, exception);
+            if (exception instanceof JwtValidationException)
+                handleException(response, (JwtValidationException) exception);
             else handleException(response, JwtException.fromException(exception));
         }
     }
 
-    private void handleException(HttpServletResponse response, Exception exception) throws IOException {
+    private void handleException(HttpServletResponse response, JwtValidationException exception) throws IOException {
         response.setContentType("application/json");
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setStatus(exception.getErrorMessage().getHttpStatus().value());
         Map<String, Object> body = Map.of("error", exception.getMessage(), "timestamp", LocalDateTime.now().toString());
         response.getWriter().write(new ObjectMapper().writeValueAsString(body));
     }
