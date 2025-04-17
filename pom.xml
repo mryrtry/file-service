@@ -58,7 +58,7 @@
 
     <!-- Config properties -->
     <properties>
-        <java.version>23</java.version>
+        <java.version>22</java.version>
         <jjwt.version>0.11.5</jjwt.version>
     </properties>
 
