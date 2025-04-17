@@ -36,8 +36,9 @@ public class FileSynchronizationAspect {
         List<String> userFilenames = userFilesMeta.stream().map(fileMeta -> fileMeta.getUuid() + fileMeta.getExtension()).toList();
         List<String> matchedFilenameList = filePathService.syncingUserFiles(userFilenames, userId);
         userFilesMeta.forEach(fileMeta -> {
-            if (!matchedFilenameList.contains(fileMeta.getDiskName())) {
-                fileMetaRepository.delete(fileMeta);
+            if (!matchedFilenameList.contains(fileMeta.getDiskName()) && !fileMeta.isDeletedFromDisk()) {
+                fileMeta.setDeletedFromDisk(true);
+                fileMetaRepository.save(fileMeta);
                 FILE_NOT_FOUND_ON_DISK.log(fileMeta.getName(), userId);
             }
         });

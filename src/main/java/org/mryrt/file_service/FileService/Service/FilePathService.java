@@ -2,6 +2,7 @@ package org.mryrt.file_service.FileService.Service;
 
 import org.mryrt.file_service.Auth.Service.UserService;
 import org.mryrt.file_service.FileService.Exceptions.FileProcessException;
+import org.mryrt.file_service.FileService.Model.FileMeta;
 import org.mryrt.file_service.Utility.Annotation.TrackExecutionTime;
 import org.mryrt.file_service.Utility.Message.Files.FilesErrorMessage;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.lang.ref.Cleaner;
 import java.nio.file.*;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,12 +28,10 @@ import static org.mryrt.file_service.Utility.Message.Files.FilesLogMessage.*;
 @TrackExecutionTime
 public class FilePathService {
 
+    private final ResourceLoader resourceLoader;
+    private final UserService userService;
     @Value("${file.service.upload-dir}")
     private String UPLOAD_DIR;
-
-    private final ResourceLoader resourceLoader;
-
-    private final UserService userService;
 
     public FilePathService(ResourceLoader resourceLoader, UserService userService) {
         this.resourceLoader = resourceLoader;
@@ -55,8 +55,7 @@ public class FilePathService {
     private Path getBaseFolder() {
         Path folder = Paths.get(UPLOAD_DIR).normalize();
         try {
-            if (Files.isDirectory(folder))
-                Files.createDirectories(folder);
+            if (Files.isDirectory(folder)) Files.createDirectories(folder);
         } catch (IOException ignored) {
         }
         return folder;
@@ -67,16 +66,13 @@ public class FilePathService {
         LongAdder folderSize = new LongAdder();
 
         try (Stream<Path> pathStream = Files.walk(folder)) {
-            pathStream
-                    .parallel()
-                    .filter(Files::isRegularFile)
-                    .forEach(file -> {
-                        try {
-                            folderSize.add(Files.size(file));
-                        } catch (IOException exception) {
-                            FILE_SKIPPED.log(file.getFileName(), exception.getMessage());
-                        }
-                    });
+            pathStream.parallel().filter(Files::isRegularFile).forEach(file -> {
+                try {
+                    folderSize.add(Files.size(file));
+                } catch (IOException exception) {
+                    FILE_SKIPPED.log(file.getFileName(), exception.getMessage());
+                }
+            });
         } catch (IOException exception) {
             throw new FileProcessException(USER_DIRECTORY_ACCESS_ERROR, exception, userId);
         } finally {
@@ -184,6 +180,20 @@ public class FilePathService {
                     });
         } catch (IOException ignored) {
         }
+    }
+
+    public List<FileMeta> checkUserFilesWasSuspiciousModified(List<FileMeta> fileMetas, long userId) {
+        Path folder = getUserFolder(userId);
+        fileMetas.forEach(fileMeta -> {
+            try {
+                Path file = folder.resolve(fileMeta.getDiskName()).normalize();
+                if (Duration.between(Files.getLastModifiedTime(file).toInstant(), fileMeta.getUpdateAt()).toMillis() > 1000)
+                    fileMeta.setSuspiciousModified(true);
+            } catch (IOException ignored) {
+                FILE_NOT_READABLE.log(fileMeta.getName(), String.valueOf(userId));
+            }
+        });
+        return fileMetas;
     }
 
 }

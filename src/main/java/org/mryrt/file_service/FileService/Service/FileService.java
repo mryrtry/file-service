@@ -99,8 +99,9 @@ public class FileService {
 
     @FileSync
     public List<FileMetaDTO> getFiles() {
-        return fileMetaRepository
-                .findAllByOwnerId(userService.getAuthUserId())
+        long userId = userService.getAuthUserId();
+        return filePathService
+                .checkUserFilesWasSuspiciousModified(fileMetaRepository.findAllByOwnerId(userId), userId)
                 .stream()
                 .map(FileMetaDTO::new)
                 .toList();

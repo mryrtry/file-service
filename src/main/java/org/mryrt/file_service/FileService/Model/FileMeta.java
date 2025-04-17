@@ -41,7 +41,10 @@ public class FileMeta {
     private String uuid;
 
     @Column(nullable = false)
-    private boolean suspiciousModification;
+    private boolean deletedFromDisk;
+
+    @Transient
+    private boolean suspiciousModified;
 
     @CreatedDate
     @Column(nullable = false, updatable = false, columnDefinition = "TIMESTAMP")

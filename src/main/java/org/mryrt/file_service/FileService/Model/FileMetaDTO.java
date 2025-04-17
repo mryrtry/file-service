@@ -1,23 +1,15 @@
 package org.mryrt.file_service.FileService.Model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
-// Java time
 import java.time.Instant;
 
 @Data
 public class FileMetaDTO {
 
-    public FileMetaDTO(FileMeta fileMeta) {
-        this.id = fileMeta.getId();
-        this.name = fileMeta.getName();
-        this.ownerId = fileMeta.getOwnerId();
-        this.size = fileMeta.getSize();
-        this.uuid = fileMeta.getUuid();
-        this.suspiciousModification = fileMeta.isSuspiciousModification();
-        this.createAt = fileMeta.getCreateAt();
-        this.updateAt = fileMeta.getUpdateAt();
-    }
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    private boolean deletedFromDisk;
 
     private int id;
 
@@ -28,8 +20,20 @@ public class FileMetaDTO {
     private long size;
 
     private String uuid;
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    private boolean suspiciousModified;
 
-    private boolean suspiciousModification;
+    public FileMetaDTO(FileMeta fileMeta) {
+        this.id = fileMeta.getId();
+        this.name = fileMeta.getName();
+        this.ownerId = fileMeta.getOwnerId();
+        this.size = fileMeta.getSize();
+        this.uuid = fileMeta.getUuid();
+        this.deletedFromDisk = fileMeta.isDeletedFromDisk();
+        this.suspiciousModified = fileMeta.isSuspiciousModified();
+        this.createAt = fileMeta.getCreateAt();
+        this.updateAt = fileMeta.getUpdateAt();
+    }
 
     private Instant createAt;
 
