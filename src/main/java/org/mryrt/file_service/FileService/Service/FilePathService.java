@@ -1,5 +1,6 @@
 package org.mryrt.file_service.FileService.Service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.mryrt.file_service.Auth.Service.UserService;
 import org.mryrt.file_service.FileService.Exceptions.FileProcessException;
 import org.mryrt.file_service.FileService.Model.FileMeta;
@@ -24,6 +25,7 @@ import java.util.stream.Stream;
 import static org.mryrt.file_service.Utility.Message.Files.FilesErrorMessage.*;
 import static org.mryrt.file_service.Utility.Message.Files.FilesLogMessage.*;
 
+@Slf4j
 @Service
 @TrackExecutionTime
 public class FilePathService {
@@ -184,16 +186,15 @@ public class FilePathService {
 
     public List<FileMeta> checkUserFilesWasSuspiciousModified(List<FileMeta> fileMetas, long userId) {
         Path folder = getUserFolder(userId);
-        fileMetas.forEach(fileMeta -> {
+        return fileMetas.stream().peek(fileMeta -> {
             try {
                 Path file = folder.resolve(fileMeta.getDiskName()).normalize();
-                if (Duration.between(Files.getLastModifiedTime(file).toInstant(), fileMeta.getUpdateAt()).toMillis() > 1000)
+                if (Duration.between(fileMeta.getUpdateAt(), Files.getLastModifiedTime(file).toInstant()).toMillis() > 1000)
                     fileMeta.setSuspiciousModified(true);
             } catch (IOException ignored) {
                 FILE_NOT_READABLE.log(fileMeta.getName(), String.valueOf(userId));
             }
-        });
-        return fileMetas;
+        }).toList();
     }
 
 }

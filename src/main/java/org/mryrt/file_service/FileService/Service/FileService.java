@@ -69,7 +69,13 @@ public class FileService {
             throw new FileProcessException(INVALID_FILE_UUID);
     }
 
+    private void assertFileOnDisk(FileMeta fileMeta) {
+        if (fileMeta.isDeletedFromDisk())
+            throw new FileProcessException(USER_FILE_NOT_EXIST, fileMeta.getName(), fileMeta.getOwnerId());
+    }
+
     private FileMeta getFileMeta(String uuid, long userId) {
+        assertUuid(uuid);
         return fileMetaRepository.findByUuidAndOwnerId(uuid, userId)
                 .orElseThrow(() -> new FileProcessException(UUID_NOT_EXIST, uuid, userId));
     }
@@ -104,18 +110,20 @@ public class FileService {
 
     @FileSync
     public Pair<Resource, HttpHeaders> getFile(String uuid) {
-        assertUuid(uuid);
         long userId = userService.getAuthUserId();
         FileMeta fileMeta = getFileMeta(uuid, userId);
+        assertFileOnDisk(fileMeta);
         return Pair.of(filePathService.getUserFile(fileMeta.getDiskName(), userId), getHttpHeaders(fileMeta.getName()));
     }
 
     @FileSync
     public FileMetaDTO deleteFile(String uuid) {
-        assertUuid(uuid);
         long userId = userService.getAuthUserId();
         FileMeta fileMeta = getFileMeta(uuid, userId);
-        filePathService.deleteUserFile(fileMeta.getDiskName(), userId);
+        if (!fileMeta.isDeletedFromDisk()) {
+            filePathService.deleteUserFile(fileMeta.getDiskName(), userId);
+            fileMeta.setDeletedFromDisk(false);
+        }
         fileMetaRepository.delete(fileMeta);
         return new FileMetaDTO(fileMeta);
     }
