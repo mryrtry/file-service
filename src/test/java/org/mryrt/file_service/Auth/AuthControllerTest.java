@@ -12,6 +12,7 @@ import org.mryrt.file_service.Utility.TestJwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -115,6 +116,15 @@ public class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(createLogInRequest(username, password))))
                 .andExpect(status().is(authErrorMessage.getHttpStatus().value()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.%s".formatted(authErrorMessage.getErrorField())).value(authErrorMessage.getFormattedMessage(args)))
+                .andDo(print());
+    }
+
+    private void performLogInAndExpectBadRequest() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/log-in")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createLogInRequest("nonexistentUser", "password123"))))
+                .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.%s".formatted(AuthErrorMessage.USERNAME_NOT_FOUND.getErrorField())).value(AuthErrorMessage.USERNAME_NOT_FOUND.getFormattedMessage("nonexistentUser")))
                 .andDo(print());
     }
 
@@ -223,7 +233,7 @@ public class AuthControllerTest {
 
     @Test
     void logIn_NonExistentUser() throws Exception {
-        performLogInAndExpectError("nonexistentUser", "password123", USERNAME_NOT_FOUND, "nonexistentUser");
+        performLogInAndExpectBadRequest();
     }
 
     @Test
