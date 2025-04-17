@@ -19,49 +19,46 @@ public class RequestValidator {
 
     public void validate(String username, String password, boolean shouldExist) {
         Map<String, String> errors = new LinkedHashMap<>();
-        if (!validateUsername(errors, username, shouldExist) | !validatePassword(errors, password))
+        validateUsername(errors, username, shouldExist);
+        validatePassword(errors, password);
+        if (!errors.isEmpty())
             throw new RequestValidationException(errors);
     }
 
-    public boolean validateUsername(Map<String, String> errors, String username, boolean shouldExist) {
+    public void validateUsername(Map<String, String> errors, String username, boolean shouldExist) {
 
         if (username == null || username.isBlank()) {
             errors.put(USERNAME_REQUIRED.getErrorField(), USERNAME_REQUIRED.getFormattedMessage());
-            return false;
+            return;
         }
 
         if (username.length() < 2 || username.length() > 30) {
             errors.put(USERNAME_LENGTH.getErrorField(), USERNAME_LENGTH.getFormattedMessage());
-            return false;
+            return;
         }
 
         if (!username.matches("^[a-zA-Z0-9_\\s]+$") || !username.strip().equals(username)) {
             errors.put(USERNAME_INVALID_CHARS.getErrorField(), USERNAME_INVALID_CHARS.getFormattedMessage());
-            return false;
+            return;
         }
 
         if (userRepository.existsByUsername(username) != shouldExist) {
             ErrorMessage errorMessage = shouldExist ? USERNAME_NOT_FOUND : USERNAME_ALREADY_EXISTS;
             errors.put(errorMessage.getErrorField(), errorMessage.getFormattedMessage(username));
-            return false;
         }
 
-        return true;
     }
 
-    public boolean validatePassword(Map<String, String> errors, String password) {
+    public void validatePassword(Map<String, String> errors, String password) {
 
         if (password == null || password.isBlank()) {
             errors.put(PASSWORD_REQUIRED.getErrorField(), PASSWORD_REQUIRED.getFormattedMessage());
-            return false;
+            return;
         }
 
-        if (password.length() < 5) {
+        if (password.length() < 5)
             errors.put(PASSWORD_TOO_SHORT.getErrorField(), PASSWORD_TOO_SHORT.getFormattedMessage());
-            return false;
-        }
 
-        return true;
     }
 
 }
