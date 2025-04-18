@@ -122,8 +122,8 @@ public class FileService {
         FileMeta fileMeta = getFileMeta(uuid, userId);
         if (!fileMeta.isDeletedFromDisk()) {
             filePathService.deleteUserFile(fileMeta.getDiskName(), userId);
-            fileMeta.setDeletedFromDisk(false);
         }
+        fileMeta.setDeletedFromDisk(false);
         fileMetaRepository.delete(fileMeta);
         return new FileMetaDTO(fileMeta);
     }
