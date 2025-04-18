@@ -4,6 +4,7 @@ import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -18,6 +19,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 
+@Slf4j
 @Aspect
 @Component
 @AllArgsConstructor
@@ -42,9 +44,11 @@ public class RateLimitingAspect {
     private String getClientKey(ProceedingJoinPoint joinPoint) {
         RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
         HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
+        String clientIp = (request.getHeader("X-Forwarded-For") == null) ? request.getRemoteAddr() : request.getHeader("X-Forwarded-For");
         String className = joinPoint.getSignature().getDeclaringTypeName();
         String methodName = joinPoint.getSignature().getName();
-        return "%s:%s:%s".formatted(request.getRemoteAddr(), className, methodName);
+        log.error(request.getRemoteAddr());
+        return "%s:%s:%s".formatted(clientIp, className, methodName);
     }
 
 }
